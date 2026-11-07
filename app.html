@@ -42,6 +42,9 @@ const Store={
   async get(k){
     if(this.url()){const r=await this.call({a:'get',key:k});return r.value?JSON.parse(r.value):null}
     try{const v=localStorage.getItem('smkp:'+k);return v?JSON.parse(v):null}catch(e){return null}},
+  async mget(keys){
+    if(this.url()){const r=await this.call({a:'mget',keys});const o={};keys.forEach(k=>{o[k]=r.values&&r.values[k]?JSON.parse(r.values[k]):null});return o}
+    const o={};for(const k of keys)o[k]=await this.get(k);return o},
   async set(k,v){
     if(this.url()){await this.call({a:'set',key:k,value:v});return}
     try{localStorage.setItem('smkp:'+k,JSON.stringify(v))}catch(e){}},
@@ -76,10 +79,11 @@ const KEL=['Profil organisasi','Profil risiko','Data kinerja keselamatan pertamb
 const LEVEL=['Pengawas Operasional','Pengawas Teknik','Manajerial','Pekerja'];
 const K=k=>Store.cur()+'/'+k;
 async function load(){
-  if(Store.url()){await Store.get('index')}  // menetapkan peran dari server
-  for(const k of Object.keys(DEF)){if(k==='tindaklanjut')continue;const v=await Store.get(K(k));S[k]=Object.assign(JSON.parse(JSON.stringify(DEF[k])),v||{})}
-  const a=await Store.get(K('tl_auditi'))||{},v=await Store.get(K('tl_verif'))||{};S.tindaklanjut=a;for(const id in v)(S.tindaklanjut[id]=S.tindaklanjut[id]||{}).verif=v[id];
-  S._index=(await Store.get('index'))||[];if(!S._index.find(x=>x.id===Store.cur())){S._index.push({id:Store.cur(),label:'Audit '+Store.cur()});await Store.set('index',S._index).catch(()=>{})}}
+  const ks=Object.keys(DEF).filter(k=>k!=='tindaklanjut'),keys=['index',...ks.map(K),K('tl_auditi'),K('tl_verif')];
+  const m=await Store.mget(keys);
+  ks.forEach(k=>{S[k]=Object.assign(JSON.parse(JSON.stringify(DEF[k])),m[K(k)]||{})});
+  const a=m[K('tl_auditi')]||{},v=m[K('tl_verif')]||{};S.tindaklanjut=a;for(const id in v)(S.tindaklanjut[id]=S.tindaklanjut[id]||{}).verif=v[id];
+  S._index=m['index']||[];if(!S._index.find(x=>x.id===Store.cur())){S._index.push({id:Store.cur(),label:'Audit '+Store.cur()});if(Store.role==='admin')await Store.set('index',S._index).catch(()=>{})}}
 const pend={};
 function isLocked(){const x=(S._index||[]).find(i=>i.id===Store.cur());return !!(x&&x.locked)}
 function save(k){if(Store.role==='reader')return;clearTimeout(pend[k]);pend[k]=setTimeout(async()=>{try{
