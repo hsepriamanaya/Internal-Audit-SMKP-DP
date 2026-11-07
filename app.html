@@ -1,37 +1,128 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Audit SMKP Minerba</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f4c5c'/%3E%3Crect x='6' y='8' width='20' height='4' rx='1' fill='%23c8a46a'/%3E%3Crect x='6' y='14' width='20' height='4' rx='1' fill='%23b07d52'/%3E%3Crect x='6' y='20' width='20' height='4' rx='1' fill='%23f2b705'/%3E%3C/svg%3E">
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--tx:#1b2430;--mu:#5d6b7c;--bd:#d9dee5;--ac:#1f4e78;--ok:#1a7f4b;--wr:#b45309;--er:#b42318}
-@media(prefers-color-scheme:dark){:root{--bg:#10151c;--card:#18202a;--tx:#e6ebf1;--mu:#93a1b3;--bd:#2b3644;--ac:#6aa7e0}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,Segoe UI,Arial,sans-serif}
-header{background:var(--ac);color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-header h1{font-size:16px;margin:0;flex:1}header small{opacity:.85}
-nav{display:flex;gap:2px;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--bd);padding:0 8px}
-nav button{border:0;background:none;color:var(--mu);padding:10px 12px;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;font:inherit}
-nav button.on{color:var(--ac);border-color:var(--ac);font-weight:600}
-main{max-width:1180px;margin:0 auto;padding:16px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:14px;margin-bottom:14px}
-h2{font-size:15px;margin:0 0 10px}h3{font-size:13px;margin:14px 0 6px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
-label{display:block;font-size:12px;color:var(--mu);margin:8px 0 2px}
-input,select,textarea{width:100%;padding:6px 8px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font:inherit}
-textarea{min-height:60px}
-.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 14px}
-table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid var(--bd);padding:4px 6px;vertical-align:top;text-align:left}
-th{background:var(--bg);font-weight:600}td input,td select{padding:3px 5px}
-.btn{background:var(--ac);color:#fff;border:0;border-radius:5px;padding:6px 12px;cursor:pointer;font:inherit}
-.btn.s{background:none;color:var(--ac);border:1px solid var(--ac)}.btn.x{background:none;color:var(--er);border:1px solid var(--er);padding:2px 8px}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
-.pill{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;background:var(--bd);margin:1px}
-.kpi{display:flex;gap:10px;flex-wrap:wrap}.kpi div{flex:1;min-width:110px;border:1px solid var(--bd);border-radius:6px;padding:8px;background:var(--bg)}
-.kpi b{display:block;font-size:20px}.kpi span{font-size:11px;color:var(--mu)}
-.warn{color:var(--wr)}.err{color:var(--er)}.ok{color:var(--ok)}.mu{color:var(--mu)}
-#msg{position:fixed;right:12px;bottom:12px;background:var(--card);border:1px solid var(--bd);padding:8px 12px;border-radius:6px;display:none}
-.hide{display:none}
+:root{--bg:#eceeed;--surface:#fff;--sunk:#f4f6f5;--ink:#1b2a31;--mut:#5a6a73;--line:#d9dfe1;--pri:#0f4c5c;--pri-2:#0b3a47;--on-pri:#fff;--hi:#f2b705;
+--kt:#a4161a;--my:#cf4a0c;--mn:#a8710d;--ps:#2c7a4b;--na:#8896a0;--kt-bg:#f9e0e0;--my-bg:#fde6d8;--mn-bg:#fbefcf;--ps-bg:#dcf0e3;
+--s1:#c8a46a;--s2:#b07d52;--s3:#8b6a52;--s4:#4d5b61;--s5:#6f8a7a;--s6:#9aa5ab;--s7:#3d6f80;--r:6px;--sh:0 1px 2px rgba(15,40,50,.06),0 4px 14px rgba(15,40,50,.05)}
+@media(prefers-color-scheme:dark){:root{--bg:#0e161a;--surface:#16222a;--sunk:#111c22;--ink:#e5edf0;--mut:#93a5ae;--line:#26363f;--pri:#5eb4c8;--pri-2:#7cc6d8;--on-pri:#06222b;
+--kt:#ff7b7f;--my:#ff9a62;--mn:#f0c05a;--ps:#6fcf93;--na:#7d8c96;--kt-bg:#3a1b1d;--my-bg:#3b2415;--mn-bg:#372c12;--ps-bg:#15332290;--sh:none}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.5 "Public Sans","Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.serif{font-family:"Source Serif 4",Georgia,serif}
+:focus-visible{outline:3px solid var(--hi);outline-offset:2px;border-radius:3px}
+.app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}
+.rail{background:var(--pri-2);color:#e8f1f3;padding:18px 14px;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column;gap:14px}
+@media(prefers-color-scheme:dark){.rail{background:#0b1418;border-right:1px solid var(--line);color:var(--ink)}}
+.brand{display:flex;gap:10px;align-items:center;padding:2px 6px 8px}
+.brand svg{flex:none}.brand b{font:600 17px/1.1 "Source Serif 4",Georgia,serif;display:block}.brand small{opacity:.7;font-size:11.5px}
+.rail label{color:#b8cdd3;margin:0 0 4px 6px;font-size:12px}
+.rail select{background:#0a2f3a;color:#fff;border:1px solid #2c5a68}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.steps button,.rail .plain{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r);cursor:pointer;color:#d5e4e8;font-size:14px}
+.steps button:hover{background:rgba(255,255,255,.07)}
+.steps button.on{background:#fff;color:var(--pri-2);font-weight:600}
+@media(prefers-color-scheme:dark){.steps button.on{background:var(--surface);color:var(--pri-2)}}
+.steps .n{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;border:1.5px solid rgba(255,255,255,.4)}
+.steps button.on .n{border-color:var(--pri-2)}
+.steps .n.done{background:var(--ps);border-color:var(--ps);color:#fff}
+.steps .t{flex:1}.steps .p{font-size:11.5px;opacity:.75}
+.steps hr{border:0;border-top:1px solid rgba(255,255,255,.15);margin:8px 0}
+.railfoot{margin-top:auto;font-size:12.5px;display:flex;flex-direction:column;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.12);font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--na)}.dot.on{background:#5fd18b}.dot.err{background:#ff7b7f}.dot.wait{background:var(--hi)}
+.rail .btn{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25)}.rail .btn:hover{background:rgba(255,255,255,.2)}
+.work{min-width:0}
+.top{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:24px 32px 8px}
+.top h1{font-size:28px;line-height:1.15;margin:0;font-weight:600;letter-spacing:-.01em}
+.top p{margin:4px 0 0;color:var(--mut);max-width:62ch}.top .grow{flex:1;min-width:260px}
+main{max-width:1180px;padding:12px 32px 64px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;margin-bottom:16px;box-shadow:var(--sh)}
+.card>h2:first-child{margin-top:0}
+h2{font-size:19px;font-weight:600;margin:0 0 12px;letter-spacing:-.005em}
+h3{font-size:15px;font-weight:600;margin:22px 0 8px;color:var(--ink);font-family:"Public Sans",system-ui,sans-serif;padding-top:14px;border-top:1px solid var(--line)}
+h3:first-child{border:0;padding-top:0;margin-top:0}
+label{display:block;font-size:12.5px;font-weight:500;color:var(--mut);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--sunk);color:var(--ink);font:inherit;transition:border-color .12s,background .12s}
+input:hover,select:hover,textarea:hover{border-color:var(--na)}
+input:focus,select:focus,textarea:focus{border-color:var(--pri);background:var(--surface);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--hi) 55%,transparent)}
+input[type=checkbox]{width:auto;accent-color:var(--pri)}textarea{min-height:72px;resize:vertical}
+input:disabled,select:disabled,textarea:disabled{opacity:.6;cursor:not-allowed}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:0 18px}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:6px 0}
+th{background:var(--sunk);font-weight:600;text-align:left;color:var(--mut);font-size:12.5px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+tr:last-child td{border-bottom:0}td input,td select{padding:5px 7px;background:var(--surface)}
+tbody tr:hover td,table tr:hover>td{background:color-mix(in srgb,var(--sunk) 70%,transparent)}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--pri);color:var(--on-pri);border:1px solid var(--pri);border-radius:var(--r);padding:8px 14px;cursor:pointer;font:500 14px/1.2 inherit;font-family:inherit;transition:background .12s,transform .05s}
+.btn:hover{background:var(--pri-2);border-color:var(--pri-2)}.btn:active{transform:translateY(1px)}
+.btn.s{background:transparent;color:var(--pri);border-color:var(--line)}.btn.s:hover{background:var(--sunk);border-color:var(--pri)}
+.btn.x{background:transparent;color:var(--kt);border-color:transparent;padding:4px 8px}.btn.x:hover{background:var(--kt-bg)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;background:var(--sunk);border:1px solid var(--line);margin:1px 2px 1px 0}
+.tag{display:inline-block;padding:2px 9px;border-radius:4px;font-size:12px;font-weight:600}
+.tag.KRITIKAL{background:var(--kt-bg);color:var(--kt)}.tag.MAYOR{background:var(--my-bg);color:var(--my)}.tag.MINOR{background:var(--mn-bg);color:var(--mn)}.tag.POSITIF{background:var(--ps-bg);color:var(--ps)}.tag.NA{background:var(--sunk);color:var(--na)}
+.mu{color:var(--mut)}.warn{color:var(--my)}.err{color:var(--kt)}.ok{color:var(--ps)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.kpi>div{padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--sunk)}
+.kpi b{display:block;font:600 26px/1.1 "Source Serif 4",Georgia,serif}.kpi span{font-size:12.5px;color:var(--mut)}
+.kpi .kt b{color:var(--kt)}.kpi .my b{color:var(--my)}.kpi .mn b{color:var(--mn)}
+details>summary{cursor:pointer;color:var(--pri);font-weight:500;padding:4px 0;list-style:revert}
+.note{border-left:3px solid var(--hi);background:var(--sunk);padding:10px 14px;border-radius:0 var(--r) var(--r) 0;color:var(--mut)}
+.empty{padding:28px;text-align:center;color:var(--mut);border:1.5px dashed var(--line);border-radius:var(--r)}
+/* penampang SMKP */
+.strata{display:flex;flex-direction:column;gap:3px}
+.layer{position:relative;border-radius:3px;overflow:hidden;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--c) 14%,var(--surface)) 0 6px,color-mix(in srgb,var(--c) 6%,var(--surface)) 6px 12px);min-height:var(--h);display:flex;align-items:center;border:1px solid color-mix(in srgb,var(--c) 40%,transparent)}
+.layer i{position:absolute;inset:0 auto 0 0;width:var(--w);background:var(--c);transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.layer span{position:relative;z-index:1;padding:0 12px;font-size:13px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45);display:flex;width:100%}
+.layer span em{font-style:normal;font-weight:500;opacity:.95}
+.layer span b{background:rgba(10,24,30,.58);padding:2px 8px;border-radius:3px;text-shadow:none;line-height:1.35}
+.lrow{display:grid;grid-template-columns:minmax(0,1fr) 78px;gap:12px;align-items:center}.cap{text-align:right;line-height:1.15}.cap b{display:block;font:600 17px "Source Serif 4",Georgia,serif}.cap small{color:var(--mut);font-size:12px}
+.hide{display:none!important}
+/* penilaian */
+.bar{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);padding:10px 0;margin:0 0 6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line)}
+.bar .seg{display:flex;gap:4px;flex-wrap:wrap}
+.chipb{border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:5px 11px;border-radius:99px;cursor:pointer;font:500 13px inherit;font-family:inherit}
+.chipb.on{background:var(--pri);color:var(--on-pri);border-color:var(--pri)}.chipb small{opacity:.75;margin-left:4px}
+.item{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);margin-bottom:10px;padding:14px 16px;border-left:4px solid var(--line)}
+.item.KRITIKAL{border-left-color:var(--kt)}.item.MAYOR{border-left-color:var(--my)}.item.MINOR{border-left-color:var(--mn)}.item.POSITIF{border-left-color:var(--ps)}
+.item .hd{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}.item .hd .tt{flex:1;min-width:240px}.item .id{font-weight:700;color:var(--pri);margin-right:6px}
+.score{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.score button{all:unset;cursor:pointer;min-width:38px;padding:7px 0;text-align:center;font-weight:600;background:var(--surface);border-right:1px solid var(--line)}
+.score button:last-child{border-right:0}.score button:hover{background:var(--sunk)}
+.score button.on{color:#fff}.score button.on.s0{background:var(--kt)}.score button.on.sm{background:var(--my)}.score button.on.sn{background:var(--mn)}.score button.on.sp{background:var(--ps)}
+.score button:focus-visible{outline:3px solid var(--hi);outline-offset:-3px}
+.cp{margin:8px 0;padding:8px 12px;border-left:3px solid var(--line);background:var(--sunk);border-radius:0 var(--r) var(--r) 0}
+.rub{font-size:13px;color:var(--mut);margin-top:8px;padding:8px 12px;background:var(--sunk);border-radius:var(--r)}
+#msg{position:fixed;right:18px;bottom:18px;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:var(--r);display:none;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:50;max-width:min(420px,90vw)}
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);padding:24px;width:min(460px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(8,20,26,.55)}
+@media(max-width:900px){.rail label{display:none}.brand{padding:0}.brand small{display:none}.lrow{grid-template-columns:minmax(0,1fr) 56px;gap:8px}.cap b{font-size:15px}.cap small{display:none}.app{grid-template-columns:1fr}.rail{position:static;height:auto;flex-direction:column;padding:12px}
+ .steps{flex-direction:row;overflow-x:auto;gap:4px}.steps button{width:auto;white-space:nowrap}.steps hr{display:none}.steps .p{display:none}.railfoot{margin:0;flex-direction:row;align-items:center;flex-wrap:wrap}
+ .top{padding:16px 16px 4px}.top h1{font-size:23px}main{padding:8px 14px 48px}.card{padding:16px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media print{.rail,#msg{display:none}.app{display:block}}
 </style></head><body>
-<header><h1>Audit Internal SMKP Minerba</h1><small id="who"></small><span id="sync" class="pill">lokal</span>
-<button class="btn s" style="color:#fff;border-color:#fff" onclick="App.cfg()">Koneksi</button></header>
-<nav id="nav"></nav><main id="main"></main><div id="msg"></div>
+<div class="app">
+<aside class="rail">
+ <div class="brand"><svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#fff" fill-opacity=".12"/><rect x="6" y="8" width="20" height="4" rx="1" fill="#c8a46a"/><rect x="6" y="14" width="20" height="4" rx="1" fill="#b07d52"/><rect x="6" y="20" width="20" height="4" rx="1" fill="#f2b705"/></svg><div><b>Audit SMKP</b><small>Minerba · internal</small></div></div>
+ <div><label for="auditSel">Audit aktif</label><select id="auditSel" onchange="pilihAudit(this.value)"></select></div>
+ <ul class="steps" id="nav"></ul>
+ <div class="railfoot"><span class="chip"><i class="dot" id="sdot"></i><span id="sync">lokal</span></span><span class="chip" id="who"></span>
+  <button class="btn" onclick="App.cfg()">Koneksi</button><button class="btn hide" id="btnOut" onclick="App.out()">Keluar</button></div>
+</aside>
+<div class="work"><header class="top"><div class="grow"><h1 id="ttl"></h1><p id="sub"></p></div><div id="act"></div></header><main id="main"></main></div>
+</div>
+<div id="msg" role="status" aria-live="polite"></div>
+<dialog id="dlg"><form method="dialog" onsubmit="return App.saveCfg(event)"><h2>Hubungkan ke Google Sheets</h2>
+<p class="mu">Isi URL Web App dan kunci akses sesuai peran Anda. Kosongkan URL untuk bekerja secara lokal di browser ini.</p>
+<label for="cfgUrl">URL Web App</label><input id="cfgUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
+<label for="cfgKey">Kunci akses</label><input id="cfgKey" type="password" autocomplete="off"><p class="err" id="cfgErr"></p>
+<div class="row"><button class="btn">Hubungkan</button><button type="button" class="btn s" onclick="dlg.close()">Batal</button></div></form></dialog>
 <script src="master_web.js"></script><script src="core.js"></script><script src="vendor/docx.iife.js"></script><script src="vendor/jszip.min.js"></script><script src="docgen.js"></script>
 <script>
 // ---------- Store: Apps Script bila dikonfigurasi, jika tidak localStorage ----------
@@ -54,7 +145,7 @@ const Store={
 };
 const $=(s,r)=>(r||document).querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function toast(t){const m=$('#msg');m.textContent=t;m.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>m.style.display='none',2500)}
+function toast(t){const m=$('#msg');m.textContent=t;m.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>m.style.display='none',3200)}
 
 // ---------- State ----------
 const DEF={
@@ -193,21 +284,37 @@ function loc30(n){return Number(n.locTot)>0&&Number(n.locNC)/Number(n.locTot)>0.
 function setNil(id,v){NV(id).v=v===''?'':Number(v);save('nilai');render()}
 function setCp(id,i,f,v){const n=NV(id);(n.cp[i]=n.cp[i]||{st:'',bukti:''})[f]=v;save('nilai')}
 function setF(id,f,v){NV(id)[f]=v;save('nilai')}
+let nFilter='all',nQuery='';
+const BP=/(pemegang\s+)?IUP,?\s*IUPK,?\s*IUP Operasi Produksi khusus untuk Pengolahan dan\s*[\/j]?\s*atau Pemurnian,?\s*IPR,?\s*atau\s*IUJP/gi;
+function cl(t){return String(t==null?'':t).replace(BP,S.ba.auditi||'PH').replace(/dan\s+jatau/gi,'dan/atau').replace(/\s+/g,' ')}
+function elProg(e){const it=MASTER.filter(i=>i.el===e&&!S.plan.na[i.id]);const f=it.filter(i=>{const n=S.nilai[i.id];return n&&n.v!==''&&n.v!=null}).length;return {f,n:it.length}}
+function scCls(v,max){return v==0?'s0':v>=max?'sp':v<max/2?'sm':'sn'}
+function itemHTML(it){const na=S.plan.na[it.id],n=S.nilai[it.id]||{},k=kat(it),lv=it.lv||[],has=n.v!==''&&n.v!=null,cur=has?Number(n.v):null;
+  const rub=it.var?it.var.map(x=>`<div class="rub"><b>${esc(x.label)}</b>${cur!=null&&x.lv&&x.lv[cur]?' – nilai '+cur+': '+esc(cl(x.lv[cur]).slice(0,400)):''}</div>`).join(''):(cur!=null&&lv[cur]?`<div class="rub"><b>Nilai ${cur}:</b> ${esc(cl(lv[cur]).slice(0,420))}</div>`:'');
+  return `<div class="item ${na?'':(k||'')}" style="${na?'opacity:.55':''}"><div class="hd"><div class="tt"><span class="id">${it.id}</span>${esc(it.name)} <span class="mu">· maks ${it.max}</span></div>
+  ${na?'<span class="tag NA">N/A – dikeluarkan dari penilaian</span>':`<div class="score" role="group" aria-label="Nilai ${it.id}">${Array.from({length:Number(it.max)+1},(_,v)=>`<button type="button" class="${cur===v?'on '+scCls(v,Number(it.max)):''}" aria-pressed="${cur===v}" onclick="setNil('${it.id}',${cur===v?"''":v})">${v}</button>`).join('')}</div>${k?`<span class="tag ${k}">${k==='POSITIF'?'Sesuai':k[0]+k.slice(1).toLowerCase()}</span>`:''}`}</div>
+  ${na?'':`${rub}<details><summary>Checkpoint, bukti, dan rubrik lengkap</summary>
+  <p class="mu" style="margin:8px 0 4px">Checkpoint kriteria nilai tertinggi – metode sesuai tabel sampel Rencana Audit.</p>
+  ${it.cp.map((c,i)=>{const r=(n.cp||{})[i]||{};return `<div class="cp">${i+1}. ${esc(cl(c.t))}<div>${c.m.map(m=>`<span class="pill">${MN[m]}</span>`).join('')}</div>
+   <div class="row" style="margin:6px 0 0"><select style="width:140px" aria-label="Status checkpoint ${i+1}" onchange="setCp('${it.id}',${i},'st',this.value)">${['','Sesuai','Sebagian','Tidak sesuai'].map(o=>`<option ${o==r.st?'selected':''}>${o}</option>`).join('')}</select><input style="flex:1;min-width:220px" placeholder="Bukti: dokumen, rekaman, area, narasumber, dan jumlah sampel" value="${esc(r.bukti)}" oninput="setCp('${it.id}',${i},'bukti',this.value)"></div></div>`}).join('')}
+  <div class="g2"><div><label>Masalah (untuk uraian ketidaksesuaian)</label><textarea oninput="setF('${it.id}','masalah',this.value)">${esc(n.masalah)}</textarea></div>
+  <div><label>Lokasi dan pelaksana</label><textarea oninput="setF('${it.id}','lokasi',this.value)">${esc(n.lokasi)}</textarea></div>
+  <div><label>Lokasi diperiksa / lokasi dengan temuan (&gt;30% jadi Mayor)</label><div class="row" style="margin:0"><input type="number" style="width:90px" value="${esc(n.locTot||'')}" oninput="setF('${it.id}','locTot',this.value)" onchange="render()"> / <input type="number" style="width:90px" value="${esc(n.locNC||'')}" oninput="setF('${it.id}','locNC',this.value)" onchange="render()">${loc30(n)?'<span class="warn">&gt;30% → Mayor</span>':''}</div>
+  <label>Eskalasi manual</label><select onchange="setF('${it.id}','esc',this.value);render()">${['','Mayor','Kritikal'].map(o=>`<option ${o==n.esc?'selected':''}>${o}</option>`).join('')}</select></div></div>
+  <h3>Rubrik lengkap</h3>${(it.var?it.var.map(x=>`<div class="mu" style="margin-top:6px"><b>${esc(x.label)}</b></div>`+(x.lv||[]).map((t,v)=>t&&v<=it.max?`<div class="rub"><b>${v}</b> ${esc(cl(t).slice(0,400))}</div>`:'').join('')).join(''):lv.map((t,v)=>t&&v<=it.max?`<div class="rub"><b>${v}</b> ${esc(cl(t).slice(0,400))}</div>`:'').join(''))}</details>`}</div>`}
 function tabNilai(){
-  const nm=nilaiMap(),items=MASTER.filter(i=>i.el===curEl);
-  return `<div class="card"><div class="row">${Object.keys(ELN).map(e=>`<button class="btn ${e==curEl?'':'s'}" onclick="curEl='${e}';render()">${e}</button>`).join('')}<span class="mu">Elemen ${curEl} – ${ELN[curEl]}</span></div></div>`+
-  items.map(it=>{const na=S.plan.na[it.id],n=S.nilai[it.id]||{},k=kat(it),lv=it.lv||[];
-   return `<div class="card" style="${na?'opacity:.5':''}"><div class="row"><b>${it.id}</b><span style="flex:1">${esc(it.name)} <span class="mu">(maks ${it.max})</span></span>
-   ${na?'<span class="pill">N/A</span>':`<select style="width:90px" onchange="setNil('${it.id}',this.value)"><option value="">nilai</option>${Array.from({length:Number(it.max)+1},(_,v)=>`<option ${n.v!=='' &&n.v!=null&&Number(n.v)===v?'selected':''}>${v}</option>`).join('')}</select>
-   ${k?`<span class="pill" style="background:${k==='POSITIF'?'#cdeedd':k==='MINOR'?'#fde8c4':'#f8c9c4'};color:#222">${k}</span>`:''}`}</div>
-   ${na?'':`<details><summary class="mu">Rubrik, checkpoint &amp; bukti</summary>
-   ${(it.var?it.var.map(x=>`<div class="mu" style="margin-top:6px"><b>${esc(x.label)}</b></div>`+(x.lv||[]).map((t,v)=>t&&v<=it.max?`<div style="font-size:12px;margin:3px 0"><b>${v}</b> ${esc(String(t).slice(0,280))}</div>`:'').join('')).join(''):lv.map((t,v)=>t&&v<=it.max?`<div style="font-size:12px;margin:3px 0"><b>${v}</b> ${esc(String(t).slice(0,280))}</div>`:'').join(''))}
-   <h3>Checkpoint nilai tertinggi</h3>${it.cp.map((c,i)=>{const r=(n.cp||{})[i]||{};return `<div style="margin:6px 0;padding-left:8px;border-left:3px solid var(--bd)">${i+1}. ${esc(c.t)}<div>${c.m.map(m=>`<span class="pill">${MN[m]}</span>`).join('')}</div>
-   <div class="row"><select style="width:130px" onchange="setCp('${it.id}',${i},'st',this.value)">${['','Sesuai','Sebagian','Tidak sesuai'].map(o=>`<option ${o==r.st?'selected':''}>${o}</option>`).join('')}</select><input style="flex:1;min-width:200px" placeholder="Bukti: dokumen/rekaman/area/narasumber + jumlah sampel" value="${esc(r.bukti)}" oninput="setCp('${it.id}',${i},'bukti',this.value)"></div></div>`}).join('')}
-   <div class="g2"><div><label>Masalah (untuk uraian ketidaksesuaian)</label><textarea oninput="setF('${it.id}','masalah',this.value)">${esc(n.masalah)}</textarea></div>
-   <div><label>Lokasi / pelaksana</label><textarea oninput="setF('${it.id}','lokasi',this.value)">${esc(n.lokasi)}</textarea></div>
-   <div><label>Lokasi diperiksa / lokasi dengan temuan (&gt;30% = Mayor)</label><div class="row" style="margin:0"><input type="number" style="width:80px" value="${esc(n.locTot||'')}" oninput="setF('${it.id}','locTot',this.value)" onchange="render()"> / <input type="number" style="width:80px" value="${esc(n.locNC||'')}" oninput="setF('${it.id}','locNC',this.value)" onchange="render()">${loc30(n)?'<span class="warn">&gt;30% → Mayor</span>':''}</div></div>
-   <div><label>Eskalasi manual</label><select onchange="setF('${it.id}','esc',this.value);render()">${['','Mayor','Kritikal'].map(o=>`<option ${o==n.esc?'selected':''}>${o}</option>`).join('')}</select></div></div></details>`}</div>`}).join('')}
+  const q=nQuery.trim().toLowerCase();
+  let items=MASTER.filter(i=>i.el===curEl);
+  items=items.filter(i=>{const k=kat(i),n=S.nilai[i.id],has=n&&n.v!==''&&n.v!=null;
+    if(nFilter==='todo'&&(has||S.plan.na[i.id]))return false;if(nFilter==='nc'&&!(k&&k!=='POSITIF'))return false;if(nFilter==='pos'&&k!=='POSITIF')return false;
+    return !q||(i.id+' '+i.name).toLowerCase().includes(q)});
+  const sc=SMKP.skor(MASTER.map(i=>({id:i.id,element:i.el,max:Number(i.max),nilai:nilaiMap()[i.id]}))),e=sc.el[curEl]||{sum:0,max:0,pct:0};
+  return `<div class="bar"><div class="seg">${Object.keys(ELN).map(x=>{const g=elProg(x);return `<button class="chipb ${x==curEl?'on':''}" onclick="curEl='${x}';render()" title="${ELN[x]}">${x}<small>${g.f}/${g.n}</small></button>`}).join('')}</div>
+  <span class="mu" style="margin-left:auto">Elemen ${curEl}: <b>${e.sum}/${e.max}</b> · total audit <b>${sc.total.toFixed(2)}%</b></span></div>
+  <div class="row" style="margin-top:8px"><h2 style="margin:0;flex:1;min-width:220px">${curEl}. ${ELN[curEl]}</h2>
+   <div class="seg" style="display:flex;gap:4px">${[['all','Semua'],['todo','Belum diisi'],['nc','Ketidaksesuaian'],['pos','Sesuai']].map(([v,l])=>`<button class="chipb ${nFilter===v?'on':''}" onclick="nFilter='${v}';render()">${l}</button>`).join('')}</div>
+   <input type="search" style="width:220px" placeholder="Cari sub-elemen" value="${esc(nQuery)}" oninput="nQuery=this.value;clearTimeout(window.__nq);window.__nq=setTimeout(render,250)" aria-label="Cari sub-elemen"></div>
+  ${items.length?items.map(itemHTML).join(''):'<div class="empty">Tidak ada sub-elemen yang cocok dengan filter ini.</div>'}`}
 
 // ---------- Temuan ----------
 function temuan(){
@@ -234,21 +341,34 @@ function tabTemuan(){const L=temuan();
   return `<div class="card"><h2>Ketidaksesuaian (${L.length})</h2><p class="mu">Kategori otomatis: nilai &lt; ½ maks = Mayor, selainnya Minor; eskalasi Kritikal/Mayor manual, atau minor di &gt;30% lokasi = Mayor (tab Penilaian). Uraian disusun dari masalah, lokasi, dan bukti.</p>
   <div class="row"><div style="width:220px"><label>Batas waktu perbaikan</label><input type="date" ${bind('batas','plan')} value="${esc(S.plan.batas)}"></div>
   <button class="btn" onclick="exportDoc('L5')">Unduh Lampiran 5 (Rekapitulasi)</button><button class="btn" onclick="exportDoc('L6')">Unduh Lampiran 6 (Formulir NC)</button></div>
-  <table><tr><th>No NC</th><th>Sub-elemen</th><th>Kategori</th><th>Uraian</th></tr>${L.map(x=>`<tr><td><b>${x.no}</b></td><td>${x.it.id} ${esc(x.it.name)}<br><span class="mu">nilai ${x.n.v}/${x.it.max}</span></td><td>${x.k}${x.k==='MAYOR'&&loc30(x.n)?'<br><span class="mu">minor di '+x.n.locNC+'/'+x.n.locTot+' lokasi (&gt;30%)</span>':''}</td><td>${esc(x.txt)}
-   <details><summary class="mu">Tindak lanjut (auditi)</summary>${[['pj','Penanggung jawab'],['akar','Akar permasalahan'],['korektif','Tindakan korektif'],['preventif','Tindakan preventif'],['bukti','Bukti perbaikan'],['verif','Verifikasi tim auditor']].map(([f,l])=>`<label>${l}</label><textarea ${f==='verif'?'':'data-aud="1"'} oninput="setTL('${x.it.id}','${f}',this.value)">${esc((S.tindaklanjut[x.it.id]||{})[f])}</textarea>`).join('')}<label>Tanggal perbaikan</label><input type="date" data-aud="1" value="${esc((S.tindaklanjut[x.it.id]||{}).tgl)}" oninput="setTL('${x.it.id}','tgl',this.value)"></details></td></tr>`).join('')||'<tr><td colspan="4" class="mu">Belum ada ketidaksesuaian.</td></tr>'}</table></div>`}
+  <table><tr><th>No NC</th><th>Sub-elemen</th><th>Kategori</th><th>Uraian</th></tr>${L.map(x=>`<tr><td style="white-space:nowrap"><b>${x.no}</b></td><td>${x.it.id} ${esc(x.it.name)}<br><span class="mu">nilai ${x.n.v}/${x.it.max}</span></td><td><span class="tag ${x.k}">${x.k}</span>${x.k==='MAYOR'&&loc30(x.n)?'<br><span class="mu">minor di '+x.n.locNC+'/'+x.n.locTot+' lokasi (&gt;30%)</span>':''}</td><td>${esc(x.txt)}
+   <details><summary class="mu">Tindak lanjut (auditi)</summary>${[['pj','Penanggung jawab'],['akar','Akar permasalahan'],['korektif','Tindakan korektif'],['preventif','Tindakan preventif'],['bukti','Bukti perbaikan'],['verif','Verifikasi tim auditor']].map(([f,l])=>`<label>${l}</label><textarea ${f==='verif'?'':'data-aud="1"'} oninput="setTL('${x.it.id}','${f}',this.value)">${esc((S.tindaklanjut[x.it.id]||{})[f])}</textarea>`).join('')}<label>Tanggal perbaikan</label><input type="date" data-aud="1" value="${esc((S.tindaklanjut[x.it.id]||{}).tgl)}" oninput="setTL('${x.it.id}','tgl',this.value)"></details></td></tr>`).join('')||'<tr><td colspan="4" class="mu">Belum ada ketidaksesuaian. Temuan muncul otomatis begitu ada nilai di bawah maksimum.</td></tr>'}</table></div>`}
 
 // ---------- Hasil ----------
+const SCOL=['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)','var(--s7)'];
+function strataHTML(r){const E=Object.keys(ELN);return `<div class="strata" role="img" aria-label="Penampang capaian per elemen">${E.map((e,i)=>{const x=r.el[e]||{sum:0,max:0},pc=x.max?x.sum/x.max*100:0,h=Math.max(34,SMKP.W[e]*3.1);
+  return `<div class="lrow"><div class="layer ${pc<26?'low':''}" style="--c:${SCOL[i]};--h:${h}px;--w:${pc}%"><i></i><span><b>${e}. ${ELN[e]}</b></span></div><div class="cap"><b>${pc.toFixed(0)}%</b><small>bobot ${SMKP.W[e]}%</small></div></div>`}).join('')}</div>`}
+function scoreAll(){const nm=nilaiMap();return SMKP.skor(MASTER.map(i=>({id:i.id,element:i.el,max:Number(i.max),nilai:nm[i.id]})))}
 function tabHasil(){
-  const items=MASTER.map(it=>({id:it.id,element:it.el,max:Number(it.max),nilai:nilaiMap()[it.id]})),r=SMKP.skor(items),nm=nilaiMap(),mx={};MASTER.forEach(i=>mx[i.id]=Number(i.max));
+  const r=scoreAll(),nm=nilaiMap(),mx={};MASTER.forEach(i=>mx[i.id]=Number(i.max));
   const filled=MASTER.filter(i=>nm[i.id]!=null&&nm[i.id]!=='NA').length,warn=SMKP.cekKeterkaitan(INTERLINKS.links,nm,mx,INTERLINKS.threshold_pct);
-  const T=temuan(),c={};T.forEach(x=>c[x.k]=(c[x.k]||0)+1);
-  const pct=r.total;const pred=pct>=90?'Sangat baik':pct>=75?'Baik':pct>=60?'Cukup':'Kurang';
-  return `<div class="card"><h2>Tingkat pencapaian</h2><div class="kpi"><div><b>${pct.toFixed(2)}%</b><span>Total (terisi ${filled}/${MASTER.length} item)</span></div><div><b>${c.KRITIKAL||0}</b><span>Kritikal</span></div><div><b>${c.MAYOR||0}</b><span>Mayor</span></div><div><b>${c.MINOR||0}</b><span>Minor</span></div></div>
-  <table style="margin-top:10px"><tr><th>Elemen</th><th>Bobot</th><th>Nilai</th><th>Maks</th><th>Capaian elemen</th><th>Kontribusi</th></tr>${Object.keys(ELN).map(e=>{const x=r.el[e]||{sum:0,max:0,filled:0,n:0,pct:0,weight:SMKP.W[e]};return `<tr><td>${e}. ${ELN[e]}</td><td>${SMKP.W[e]}%</td><td>${x.sum}</td><td>${x.max}</td><td>${x.max?(x.sum/x.max*100).toFixed(1):0}%</td><td>${x.pct.toFixed(2)}%</td></tr>`}).join('')}<tr><th colspan="5">Total</th><th>${pct.toFixed(2)}%</th></tr></table>
-  <p class="mu">Item belum diisi dihitung 0 sampai selesai. Item N/A dikeluarkan dari pembagi.</p></div>
-  <div class="card"><h2>Konsistensi antar sub-elemen (${warn.length})</h2>${warn.length?`<table><tr><th>Hulu</th><th>Hilir</th><th>Alasan keterkaitan</th></tr>${warn.map(w=>`<tr><td>${w.up} (${w.pa}%)</td><td>${w.down} (${w.pb}%)</td><td>${esc(w.why)}</td></tr>`).join('')}</table>`:'<p class="ok">Tidak ada ketidakkonsistenan terdeteksi.</p>'}</div>`}
+  const T=temuan(),c={};T.forEach(x=>c[x.k]=(c[x.k]||0)+1);const pct=r.total;
+  return `<div class="card"><div class="kpi"><div><b>${pct.toFixed(2)}%</b><span>Total capaian · ${filled}/${MASTER.length} terisi</span></div><div class="kt"><b>${c.KRITIKAL||0}</b><span>Kritikal</span></div><div class="my"><b>${c.MAYOR||0}</b><span>Mayor</span></div><div class="mn"><b>${c.MINOR||0}</b><span>Minor</span></div></div>
+  <h3>Penampang capaian per elemen</h3><p class="mu" style="margin-top:0">Tebal lapisan mengikuti bobot elemen; isi berwarna menunjukkan capaian.</p>${strataHTML(r)}</div>
+  <div class="card"><h2>Rincian per elemen</h2><table><tr><th>Elemen</th><th>Bobot</th><th>Nilai</th><th>Maks</th><th>Capaian elemen</th><th>Kontribusi</th></tr>${Object.keys(ELN).map(e=>{const x=r.el[e]||{sum:0,max:0,pct:0};return `<tr><td>${e}. ${ELN[e]}</td><td>${SMKP.W[e]}%</td><td>${x.sum}</td><td>${x.max}</td><td>${x.max?(x.sum/x.max*100).toFixed(1):0}%</td><td>${x.pct.toFixed(2)}%</td></tr>`}).join('')}<tr><th colspan="5">Total</th><th>${pct.toFixed(2)}%</th></tr></table>
+  <p class="mu">Sub-elemen yang belum diisi dihitung 0. Sub-elemen N/A dikeluarkan dari pembagi.</p></div>
+  <div class="card"><h2>Konsistensi antar sub-elemen (${warn.length})</h2>${warn.length?`<table><tr><th>Hulu</th><th>Hilir</th><th>Alasan keterkaitan</th></tr>${warn.map(w=>`<tr><td>${w.up} (${w.pa}%)</td><td>${w.down} (${w.pb}%)</td><td>${esc(w.why)}</td></tr>`).join('')}</table><p class="mu">Tinjau pasangan ini: nilai hilir jauh lebih tinggi dari hulunya.</p>`:'<p class="ok">Tidak ada ketidakkonsistenan terdeteksi.</p>'}</div>`}
 
-
+// ---------- Ringkasan ----------
+function stepInfo(){const b=S.ba,nm=nilaiMap(),act=MASTER.filter(i=>!S.plan.na[i.id]),f=act.filter(i=>nm[i.id]!=null).length,md=SMKP.mandays(MANDAY,Number(b.pekerja)||0,b.kelas,faktorPct()),nc=temuan().length;
+  return {ba:{done:!!(b.auditi&&b.pekerja&&b.tim2[0]&&b.tim2[0].nama),p:md?md.total+' hari':''},plan:{done:S.plan.areas.length>0&&S.plan.manpower.length>0,p:S.plan.areas.length+' area'},
+   nilai:{done:f===act.length&&act.length>0,p:f+'/'+act.length},temuan:{done:f===act.length&&act.length>0,p:nc+' NC'},hasil:{done:f===act.length&&act.length>0,p:scoreAll().total.toFixed(1)+'%'},lap:{done:!!(S.lap.kantorPusat&&S.lap.ktt),p:''}}}
+function tabRing(){const r=scoreAll(),T=temuan(),c={};T.forEach(x=>c[x.k]=(c[x.k]||0)+1);const si=stepInfo(),b=S.ba,md=SMKP.mandays(MANDAY,Number(b.pekerja)||0,b.kelas,faktorPct());
+  const order=['ba','plan','nilai','temuan','hasil','lap'],lab={ba:'Berita acara',plan:'Rencana audit',nilai:'Penilaian',temuan:'Temuan',hasil:'Hasil',lap:'Laporan & lampiran'},nx=order.find(k=>!si[k].done)||'lap';
+  const hint={ba:'Isi data auditi, jumlah pekerja, dan tim auditor untuk menghitung hari kerja audit.',plan:'Daftarkan area lingkup beserta pelaksananya dan manpower per level pengawas agar sampel terhitung.',nilai:'Beri nilai tiap sub-elemen dan catat bukti; ketidaksesuaian terbentuk otomatis.',temuan:'Lengkapi masalah, lokasi, dan bukti agar uraian ketidaksesuaian siap pakai.',hasil:'Tinjau capaian dan peringatan konsistensi.',lap:'Lengkapi profil perusahaan lalu unduh laporan dan lampiran.'};
+  return `<div class="card"><h2>Penampang capaian</h2>${strataHTML(r)}</div>
+  <div class="card"><div class="kpi"><div><b>${r.total.toFixed(2)}%</b><span>Total capaian</span></div><div class="kt"><b>${c.KRITIKAL||0}</b><span>Kritikal</span></div><div class="my"><b>${c.MAYOR||0}</b><span>Mayor</span></div><div class="mn"><b>${c.MINOR||0}</b><span>Minor</span></div><div><b>${md?md.total:'–'}</b><span>Hari kerja${md?` (Tahap I ${md.tahap1}, II ${md.tahap2})`:''}</span></div></div></div>
+  <div class="card"><h2>Langkah berikutnya: ${lab[nx]}</h2><p>${hint[nx]}</p><div class="row"><button class="btn" onclick="go('${nx}')">Buka ${lab[nx].toLowerCase()}</button>${isLocked()?'<span class="tag NA">Audit terkunci</span>':''}</div></div>`}
 // ---------- Lampiran & Laporan ----------
 function kesList(){return MASTER.filter(it=>kat(it)==='POSITIF').map(it=>{const n=S.nilai[it.id]||{},lv=it.lv||[],def=(lv[it.max]||'').replace(/(pemegang\s+)?IUP,?\s*IUPK,?\s*IUP Operasi Produksi khusus untuk Pengolahan dan\/atau Pemurnian,?\s*IPR,?\s*atau\s*IUJP/gi,S.ba.auditi||'PH').replace(/^Terdapat bukti yang menunjukkan\s*/i,'').replace(/\s+/g,' ');
   return {id:it.id,elemen:it.el+'. '+ELN[it.el].toUpperCase(),sub:it.id+' '+it.name,ket:n.ketPos!=null&&n.ketPos!==''?n.ketPos:String(def).trim(),def:String(def).trim()}})}
@@ -331,28 +451,42 @@ function cmpCsv(){const h=['ID','Sub-elemen','Maks',window.__cmpHead[0],window._
   dl(new Blob(['﻿'+[h].concat(window.__cmpRows).map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}),'Perbandingan Audit.csv')}
 
 // ---------- shell ----------
-const TABS=[['ba','0. Berita Acara',tabBA],['plan','1. Rencana Audit',tabPlan],['nilai','2. Penilaian',tabNilai],['temuan','3. Temuan',tabTemuan],['hasil','4. Hasil',tabHasil],['lap','5. Lampiran & Laporan',tabLap],['cmp','6. Arsip & Perbandingan',tabCmp]];
-let cur='ba';
+const TABS=[
+ ['ring','Ringkasan',tabRing,'Ringkasan audit','Posisi audit saat ini: capaian per elemen, temuan, dan langkah yang perlu dikerjakan.'],
+ ['ba','Berita acara',tabBA,'Berita acara tahap awal','Informasi auditi, kelayakan audit, hari kerja, dan data risiko yang menentukan sampel.'],
+ ['plan','Rencana audit',tabPlan,'Rencana audit','Lingkup area, manpower, dan metode serta sampel untuk setiap kriteria.'],
+ ['nilai','Penilaian',tabNilai,'Penilaian','Beri nilai tiap sub-elemen berdasarkan bukti yang dikumpulkan.'],
+ ['temuan','Temuan',tabTemuan,'Ketidaksesuaian dan tindak lanjut','Kategori dan nomor terbentuk otomatis dari nilai; auditi melengkapi tindak lanjut.'],
+ ['hasil','Hasil',tabHasil,'Hasil audit','Capaian per elemen dan pemeriksaan konsistensi antar sub-elemen.'],
+ ['lap','Laporan & lampiran',tabLap,'Laporan dan lampiran','Lengkapi profil perusahaan lalu unduh laporan dan Lampiran 1–6.'],
+ ['cmp','Arsip & perbandingan',tabCmp,'Arsip dan perbandingan','Bandingkan capaian antar periode per sub-elemen; kunci audit yang sudah final.']];
+const NUMBERED=['ba','plan','nilai','temuan','hasil','lap'];
+let cur='ring';
+function go(t){cur=t;render();window.scrollTo(0,0)}
 function tabsFor(){return Store.role==='auditee'?TABS.filter(t=>t[0]==='temuan'):TABS}
 async function render(){const y=window.scrollY;const a=document.activeElement,id=a&&a.dataset&&a.dataset.p,k=a&&a.dataset&&a.dataset.k;
-  const tabs=tabsFor();if(!tabs.find(t=>t[0]===cur))cur=tabs[0][0];
-  $('#nav').innerHTML=tabs.map(t=>`<button class="${t[0]==cur?'on':''}" onclick="cur='${t[0]}';render()">${t[1]}</button>`).join('');
-  $('#who').textContent={admin:'Auditor (admin)',reader:'Pembaca (baca saja)',auditee:'Auditi'}[Store.role]||'';
-  let html;try{html=await tabs.find(t=>t[0]==cur)[2]()}catch(e){html='<p class="err">'+esc(e.message)+'</p>'}
+  const tabs=tabsFor();if(!tabs.find(t=>t[0]===cur))cur=tabs[0][0];const tb=tabs.find(t=>t[0]==cur),si=stepInfo();
+  $('#nav').innerHTML=tabs.map(t=>{const n=NUMBERED.indexOf(t[0]),inf=si[t[0]];
+    return (t[0]==='cmp'?'<hr>':'')+`<li><button class="${t[0]==cur?'on':''}" onclick="go('${t[0]}')" ${t[0]==cur?'aria-current="page"':''}><span class="n ${inf&&inf.done?'done':''}">${n>=0?(inf&&inf.done?'✓':n+1):'•'}</span><span class="t">${t[1]}</span><span class="p">${inf?inf.p:''}</span></button></li>`}).join('');
+  $('#ttl').textContent=tb[3];$('#sub').textContent=tb[4];document.title=tb[3]+' · Audit SMKP';
+  const ix=S._index||[];$('#auditSel').innerHTML=ix.map(x=>`<option value="${x.id}" ${x.id===Store.cur()?'selected':''}>${esc(x.id===Store.cur()&&S.ba&&S.ba.periode?S.ba.periode:x.label)}${x.locked?' (final)':''}</option>`).join('');
+  $('#who').textContent={admin:'Auditor',reader:'Pembaca',auditee:'Auditi'}[Store.role]||'';$('#btnOut').classList.toggle('hide',!Store.url());
+  let html;try{html=await tb[2]()}catch(e){html='<div class="card err">'+esc(e.message)+'</div>'}
   $('#main').innerHTML=html;window.scrollTo(0,y);lockUI();
   if(id){const el=document.querySelector(`[data-p="${id}"][data-k="${k}"]`);if(el&&el.tagName!=='SELECT'&&el.type!=='checkbox'){el.focus();try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}}}}
 function lockUI(){const r=Store.role;const lk=isLocked();const bn=$('#lockbn');if(bn)bn.remove();
-  if(lk){const d=document.createElement('div');d.id='lockbn';d.className='card warn';d.innerHTML='<b>Audit ini terkunci (final).</b> Penilaian, rencana, dan laporan tidak dapat diubah; hanya tindak lanjut dan unduhan yang aktif.';$('#main').prepend(d)}
+  if(lk){const d=document.createElement('div');d.id='lockbn';d.className='note';d.style.marginBottom='14px';d.innerHTML='<b>Audit ini sudah final dan terkunci.</b> Nilai, rencana, dan laporan tidak bisa diubah; tindak lanjut dan unduhan tetap aktif.';$('#main').prepend(d)}
   if(r==='admin'&&!lk)return;
   document.querySelectorAll('#main input,#main select,#main textarea,#main button').forEach(el=>{
-    const oc=el.getAttribute('onclick')||'';if(/export|dl\(|cmp|cur=|render|bukaKunci/.test(oc)||el.tagName==='SUMMARY')return;
-    if(r==='auditee'&&el.dataset.aud)return;if(r==='admin'&&lk&&(cur==='temuan'||/kunci|Kunci/.test(oc)))return;if(el.closest('#cmpSel'))return;
-    if(el.tagName==='SELECT'&&/cmp[AB]=|pilihAudit/.test(el.getAttribute('onchange')||''))return;if(el.id==='onlyChg')return;el.disabled=true})}
-const App={cfg(){const u=prompt('URL Web App (Apps Script). Kosongkan = mode lokal.',Store.url());if(u===null)return;
-  try{localStorage.setItem('smkp_url',u.trim())}catch(e){}
-  if(u.trim()){const k=prompt('Kunci akses');try{sessionStorage.setItem('smkp_key',k||'')}catch(e){}}
-  location.reload()}};
-let idle;function bump(){clearTimeout(idle);if(Store.url())idle=setTimeout(()=>{try{sessionStorage.removeItem('smkp_key')}catch(e){}alert('Sesi berakhir (30 menit tidak aktif).');location.reload()},30*60*1000)}['click','keydown','input'].forEach(e=>document.addEventListener(e,bump));bump();
-if(Store.url()&&!Store.key()){const k=prompt('Kunci akses');try{sessionStorage.setItem('smkp_key',k||'')}catch(e){}}
-load().then(()=>{$('#sync').textContent=Store.url()?'cloud':'mode lokal';render()}).catch(e=>{$('#main').innerHTML='<p class="err">Gagal memuat: '+esc(e.message)+'</p>'});
+    const oc=el.getAttribute('onclick')||'';if(/export|dl\(|cmp|go\(|render|bukaKunci|nFilter|curEl/.test(oc)||el.tagName==='SUMMARY')return;
+    if(r==='auditee'&&el.dataset.aud)return;if(r==='admin'&&lk&&(cur==='temuan'||/kunci|Kunci/.test(oc)))return;
+    if(el.tagName==='SELECT'&&/cmp[AB]=|pilihAudit/.test(el.getAttribute('onchange')||''))return;if(el.id==='onlyChg'||el.type==='search')return;el.disabled=true})}
+const dlg=$('#dlg');
+const App={cfg(msg){$('#cfgUrl').value=Store.url();$('#cfgKey').value='';$('#cfgErr').textContent=msg||'';dlg.showModal();$('#cfgUrl').focus()},
+ saveCfg(e){const u=$('#cfgUrl').value.trim(),k=$('#cfgKey').value;try{localStorage.setItem('smkp_url',u);if(u)sessionStorage.setItem('smkp_key',k);else sessionStorage.removeItem('smkp_key')}catch(x){}location.reload();return false},
+ out(){try{sessionStorage.removeItem('smkp_key')}catch(e){}location.reload()}};
+new MutationObserver(()=>{const t=$('#sync').textContent,d=$('#sdot');d.className='dot '+(/GAGAL/i.test(t)?'err':/tersimpan|cloud/i.test(t)?'on':'wait')}).observe($('#sync'),{childList:true,characterData:true,subtree:true});
+let idle;function bump(){clearTimeout(idle);if(Store.url())idle=setTimeout(()=>{try{sessionStorage.removeItem('smkp_key')}catch(e){}alert('Sesi berakhir karena 30 menit tidak aktif. Masuk lagi dengan kunci akses.');location.reload()},30*60*1000)}['click','keydown','input'].forEach(e=>document.addEventListener(e,bump));bump();
+if(Store.url()&&!Store.key()){$('#main').innerHTML='<div class="empty">Masukkan kunci akses untuk membuka data audit.</div>';App.cfg()}
+else load().then(()=>{$('#sync').textContent=Store.url()?'cloud':'mode lokal';render()}).catch(e=>{$('#main').innerHTML='<div class="card"><h2 class="err">Gagal memuat data</h2><p>'+esc(/auth|forbidden/.test(e.message)?'Kunci akses tidak dikenali.':e.message)+'</p><button class="btn" onclick="App.cfg()">Periksa koneksi</button></div>';if(/auth/.test(e.message))App.cfg('Kunci akses tidak dikenali. Periksa kembali.')});
 </script></body></html>
