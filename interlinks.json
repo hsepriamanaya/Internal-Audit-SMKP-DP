@@ -1,0 +1,346 @@
+{
+ "threshold_pct": 50,
+ "rule": "Bila nilai% hulu < 50% maks dan nilai% hilir >= 75% maks (atau selisih > threshold), beri peringatan untuk ditinjau auditor",
+ "links": [
+  {
+   "up": "IV.2.1",
+   "down": "V.1.2",
+   "why": "Pengelolaan faktor lingkungan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.2.2",
+   "down": "V.1.2",
+   "why": "Pengelolaan faktor lingkungan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.2.3",
+   "down": "V.1.2",
+   "why": "Pengelolaan faktor lingkungan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.2.4",
+   "down": "V.1.2",
+   "why": "Pengelolaan faktor lingkungan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.2.5",
+   "down": "V.1.2",
+   "why": "Pengelolaan faktor lingkungan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.2.6",
+   "down": "V.1.2",
+   "why": "Pengelolaan faktor lingkungan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.2.7",
+   "down": "V.1.2",
+   "why": "Pengelolaan faktor lingkungan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.2.8",
+   "down": "V.1.2",
+   "why": "Pengelolaan faktor lingkungan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.2.9",
+   "down": "V.1.2",
+   "why": "Pengelolaan faktor lingkungan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.2.10",
+   "down": "V.1.2",
+   "why": "Pengelolaan faktor lingkungan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.3.1",
+   "down": "V.1.3",
+   "why": "Pengelolaan kesehatan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.3.2",
+   "down": "V.1.3",
+   "why": "Pengelolaan kesehatan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.3.3",
+   "down": "V.1.3",
+   "why": "Pengelolaan kesehatan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.3.4",
+   "down": "V.1.3",
+   "why": "Pengelolaan kesehatan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.3.5",
+   "down": "V.1.3",
+   "why": "Pengelolaan kesehatan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.3.6",
+   "down": "V.1.3",
+   "why": "Pengelolaan kesehatan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.3.7",
+   "down": "V.1.3",
+   "why": "Pengelolaan kesehatan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.3.8",
+   "down": "V.1.3",
+   "why": "Pengelolaan kesehatan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.3.9",
+   "down": "V.1.3",
+   "why": "Pengelolaan kesehatan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.3.10",
+   "down": "V.1.3",
+   "why": "Pengelolaan kesehatan kerja harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.4.1",
+   "down": "V.1.4",
+   "why": "Keselamatan operasi harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.4.2",
+   "down": "V.1.4",
+   "why": "Keselamatan operasi harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.4.3",
+   "down": "V.1.4",
+   "why": "Keselamatan operasi harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.4.4",
+   "down": "V.1.4",
+   "why": "Keselamatan operasi harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.4.5",
+   "down": "V.1.4",
+   "why": "Keselamatan operasi harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.5.1",
+   "down": "V.1.5",
+   "why": "Bahan peledak harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.5.2",
+   "down": "V.1.5",
+   "why": "Bahan peledak harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.5.3",
+   "down": "V.1.5",
+   "why": "Bahan peledak harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.5.4",
+   "down": "V.1.5",
+   "why": "Bahan peledak harus dipantau & dievaluasi"
+  },
+  {
+   "up": "IV.1.1",
+   "down": "V.2",
+   "why": "Penerapan prosedur/APD diverifikasi lewat inspeksi"
+  },
+  {
+   "up": "IV.1.2",
+   "down": "V.2",
+   "why": "Penerapan prosedur/APD diverifikasi lewat inspeksi"
+  },
+  {
+   "up": "IV.1.3",
+   "down": "V.2",
+   "why": "Penerapan prosedur/APD diverifikasi lewat inspeksi"
+  },
+  {
+   "up": "I.1",
+   "down": "I.2",
+   "why": "Isi kebijakan bertumpu pada tinjauan awal"
+  },
+  {
+   "up": "I.2",
+   "down": "I.3",
+   "why": "Penetapan kebijakan"
+  },
+  {
+   "up": "I.3",
+   "down": "I.4",
+   "why": "Komunikasi kebijakan"
+  },
+  {
+   "up": "I.4",
+   "down": "I.5",
+   "why": "Tinjauan kebijakan"
+  },
+  {
+   "up": "I.2",
+   "down": "II.1",
+   "why": "Program kerja diturunkan dari kebijakan"
+  },
+  {
+   "up": "II.1",
+   "down": "II.4",
+   "why": "Tujuan/sasaran/program selaras program"
+  },
+  {
+   "up": "II.4",
+   "down": "II.5",
+   "why": "Anggaran mendukung program"
+  },
+  {
+   "up": "II.4",
+   "down": "V.1.1",
+   "why": "Pencapaian sasaran dipantau"
+  },
+  {
+   "up": "II.2.1",
+   "down": "II.2.2",
+   "why": "Konteks risiko"
+  },
+  {
+   "up": "II.2.2",
+   "down": "II.2.3",
+   "why": "Identifikasi bahaya"
+  },
+  {
+   "up": "II.2.3",
+   "down": "II.2.4",
+   "why": "Pengendalian atas bahaya teridentifikasi"
+  },
+  {
+   "up": "II.2.4",
+   "down": "II.2.5",
+   "why": "Pemantauan risiko"
+  },
+  {
+   "up": "II.2.3",
+   "down": "IV.1.1",
+   "why": "Prosedur kerja untuk setiap pekerjaan berbasis risiko"
+  },
+  {
+   "up": "II.3",
+   "down": "V.3",
+   "why": "Persyaratan hukum dievaluasi kepatuhannya"
+  },
+  {
+   "up": "III.9",
+   "down": "III.10.1",
+   "why": "Pelatihan berbasis identifikasi kompetensi"
+  },
+  {
+   "up": "III.10.1",
+   "down": "III.10.2",
+   "why": "Pelatihan -> kompetensi pekerja"
+  },
+  {
+   "up": "III.5",
+   "down": "IV.1.1",
+   "why": "Pengawas menegakkan prosedur"
+  },
+  {
+   "up": "III.3",
+   "down": "IV.8.2",
+   "why": "Pengelolaan kontraktor"
+  },
+  {
+   "up": "III.8",
+   "down": "IV.9",
+   "why": "Tim tanggap darurat vs prosedur keadaan darurat"
+  },
+  {
+   "up": "IV.3.3",
+   "down": "IV.10",
+   "why": "P3K"
+  },
+  {
+   "up": "IV.9",
+   "down": "IV.10",
+   "why": "Keadaan darurat"
+  },
+  {
+   "up": "III.12.1",
+   "down": "V.5.1",
+   "why": "Pencatatan/pelaporan dievaluasi berkala"
+  },
+  {
+   "up": "III.12.2",
+   "down": "V.5.2",
+   "why": "Pencatatan/pelaporan dievaluasi berkala"
+  },
+  {
+   "up": "III.12.3",
+   "down": "V.5.3",
+   "why": "Pencatatan/pelaporan dievaluasi berkala"
+  },
+  {
+   "up": "III.12.4",
+   "down": "V.5.4",
+   "why": "Pencatatan/pelaporan dievaluasi berkala"
+  },
+  {
+   "up": "III.12.5",
+   "down": "V.5.5",
+   "why": "Pencatatan/pelaporan dievaluasi berkala"
+  },
+  {
+   "up": "V.4",
+   "down": "III.12.2",
+   "why": "Penyelidikan kecelakaan vs pendaftaran kecelakaan"
+  },
+  {
+   "up": "V.4",
+   "down": "III.12.4",
+   "why": "Penyelidikan vs dokumentasi kejadian berbahaya"
+  },
+  {
+   "up": "V.6",
+   "down": "V.7",
+   "why": "Hasil audit ditindaklanjuti"
+  },
+  {
+   "up": "V.7",
+   "down": "VII.6",
+   "why": "Tindak lanjut jadi dasar kebijakan/peningkatan"
+  },
+  {
+   "up": "V.6",
+   "down": "VII.3",
+   "why": "Hasil audit masukan tinjauan manajemen"
+  },
+  {
+   "up": "VII.1",
+   "down": "VII.2",
+   "why": "Tinjauan -> catatan"
+  },
+  {
+   "up": "VII.2",
+   "down": "VII.3",
+   "why": "Catatan -> keluaran"
+  },
+  {
+   "up": "VII.3",
+   "down": "VII.5",
+   "why": "Keluaran -> peningkatan kinerja"
+  },
+  {
+   "up": "VI.1",
+   "down": "VI.2",
+   "why": "Manual SMKP sebagai dasar pengendalian dokumen/rekaman"
+  },
+  {
+   "up": "VI.1",
+   "down": "VI.3",
+   "why": "Manual SMKP sebagai dasar pengendalian dokumen/rekaman"
+  }
+ ]
+}

@@ -1,0 +1,233 @@
+[
+ {
+  "min": 1,
+  "max": 5,
+  "tinggi": 3.0,
+  "menengah": 2.5,
+  "rendah": 2.5
+ },
+ {
+  "min": 6,
+  "max": 10,
+  "tinggi": 3.5,
+  "menengah": 3.0,
+  "rendah": 3.0
+ },
+ {
+  "min": 11,
+  "max": 15,
+  "tinggi": 4.5,
+  "menengah": 3.5,
+  "rendah": 3.0
+ },
+ {
+  "min": 16,
+  "max": 25,
+  "tinggi": 5.5,
+  "menengah": 4.5,
+  "rendah": 3.5
+ },
+ {
+  "min": 26,
+  "max": 45,
+  "tinggi": 7.0,
+  "menengah": 5.5,
+  "rendah": 4.0
+ },
+ {
+  "min": 46,
+  "max": 65,
+  "tinggi": 8.0,
+  "menengah": 6.0,
+  "rendah": 4.5
+ },
+ {
+  "min": 66,
+  "max": 85,
+  "tinggi": 9.0,
+  "menengah": 7.0,
+  "rendah": 5.0
+ },
+ {
+  "min": 86,
+  "max": 125,
+  "tinggi": 11.0,
+  "menengah": 8.0,
+  "rendah": 5.5
+ },
+ {
+  "min": 126,
+  "max": 175,
+  "tinggi": 12.0,
+  "menengah": 9.0,
+  "rendah": 6.0
+ },
+ {
+  "min": 176,
+  "max": 275,
+  "tinggi": 13.0,
+  "menengah": 10.0,
+  "rendah": 7.0
+ },
+ {
+  "min": 276,
+  "max": 425,
+  "tinggi": 15.0,
+  "menengah": 11.0,
+  "rendah": 8.0
+ },
+ {
+  "min": 426,
+  "max": 625,
+  "tinggi": 16.0,
+  "menengah": 12.0,
+  "rendah": 9.0
+ },
+ {
+  "min": 626,
+  "max": 875,
+  "tinggi": 17.0,
+  "menengah": 13.0,
+  "rendah": 10.0
+ },
+ {
+  "min": 876,
+  "max": 1175,
+  "tinggi": 19.0,
+  "menengah": 15.0,
+  "rendah": 11.0
+ },
+ {
+  "min": 1176,
+  "max": 1550,
+  "tinggi": 20.0,
+  "menengah": 16.0,
+  "rendah": 12.0
+ },
+ {
+  "min": 1551,
+  "max": 2025,
+  "tinggi": 21.0,
+  "menengah": 17.0,
+  "rendah": 12.0
+ },
+ {
+  "min": 2026,
+  "max": 2675,
+  "tinggi": 23.0,
+  "menengah": 18.0,
+  "rendah": 13.0
+ },
+ {
+  "min": 2676,
+  "max": 3450,
+  "tinggi": 25.0,
+  "menengah": 19.0,
+  "rendah": 14.0
+ },
+ {
+  "min": 3451,
+  "max": 4350,
+  "tinggi": 27.0,
+  "menengah": 20.0,
+  "rendah": 15.0
+ },
+ {
+  "min": 4351,
+  "max": 5450,
+  "tinggi": 28.0,
+  "menengah": 21.0,
+  "rendah": 16.0
+ },
+ {
+  "min": 5451,
+  "max": 6800,
+  "tinggi": 30.0,
+  "menengah": 23.0,
+  "rendah": 17.0
+ },
+ {
+  "min": 6801,
+  "max": 8500,
+  "tinggi": 32.0,
+  "menengah": 25.0,
+  "rendah": 19.0
+ },
+ {
+  "min": 8501,
+  "max": 10700,
+  "tinggi": 34.0,
+  "menengah": 27.0,
+  "rendah": 20.0
+ },
+ {
+  "min": 10701,
+  "max": 12950,
+  "tinggi": 35.0,
+  "menengah": 29.0,
+  "rendah": 21.0
+ },
+ {
+  "min": 12951,
+  "max": 15300,
+  "tinggi": 37.0,
+  "menengah": 31.0,
+  "rendah": 22.0
+ },
+ {
+  "min": 15301,
+  "max": 17800,
+  "tinggi": 39.0,
+  "menengah": 33.0,
+  "rendah": 23.0
+ },
+ {
+  "min": 17801,
+  "max": 20500,
+  "tinggi": 41.0,
+  "menengah": 35.0,
+  "rendah": 25.0
+ },
+ {
+  "min": 20501,
+  "max": 23250,
+  "tinggi": 42.0,
+  "menengah": 36.0,
+  "rendah": 26.0
+ },
+ {
+  "min": 23251,
+  "max": 26250,
+  "tinggi": 44.0,
+  "menengah": 38.0,
+  "rendah": 27.0
+ },
+ {
+  "min": 26251,
+  "max": 29250,
+  "tinggi": 46.0,
+  "menengah": 40.0,
+  "rendah": 29.0
+ },
+ {
+  "min": 29251,
+  "max": 32450,
+  "tinggi": 48.0,
+  "menengah": 42.0,
+  "rendah": 30.0
+ },
+ {
+  "min": 32451,
+  "max": 35700,
+  "tinggi": 49.0,
+  "menengah": 43.0,
+  "rendah": 31.0
+ },
+ {
+  "min": 35701,
+  "max": 39050,
+  "tinggi": 51.0,
+  "menengah": 45.0,
+  "rendah": 33.0
+ }
+]
