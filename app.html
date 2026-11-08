@@ -207,7 +207,7 @@ function getp(o,p){return p.split('.').reduce((a,c)=>a==null?a:a[c],o)}
 function setp(o,p,v){const a=p.split('.');const l=a.pop();const t=a.reduce((x,c)=>x[c],o);t[l]=v}
 document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.p)return;
   let v=t.type==='checkbox'?(t.checked?1:0):t.value;if(t.dataset.t==='n')v=v===''?'':Number(v);if(t.dataset.nn)v=Number(v);
-  setp(S[t.dataset.k],t.dataset.p,v);save(t.dataset.k);if(t.dataset.re&&t.dataset.re!=='c')render()});
+  setp(S[t.dataset.k],t.dataset.p,v);save(t.dataset.k);});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.re){render()}});
 function F(label,k,p,type,extra){const v=getp(S[k],p);return `<div><label>${label}</label><input ${bind(p,k,type)} value="${esc(v)}" ${type==='n'?'type="number"':type==='d'?'type="date"':''} ${extra||''}></div>`}
 function listTable(k,p,cols,addLabel,defRow){ // cols [{h,f,t}]
@@ -524,8 +524,8 @@ async function render(){const y=window.scrollY;const a=document.activeElement,id
   const ix=S._index||[];$('#auditSel').innerHTML=ix.map(x=>`<option value="${x.id}" ${x.id===Store.cur()?'selected':''}>${esc(x.id===Store.cur()&&S.ba&&S.ba.periode?S.ba.periode:x.label)}${x.locked?' (final)':''}</option>`).join('');
   $('#who').textContent={admin:'Auditor',reader:'Pembaca',auditee:'Auditi'}[Store.role]||'';$('#btnOut').classList.toggle('hide',!Store.url());
   let html;try{html=await tb[2]()}catch(e){html='<div class="card err">'+esc(e.message)+'</div>'}
-  $('#main').innerHTML=html;window.scrollTo(0,y);lockUI();
-  if(id){const el=document.querySelector(`[data-p="${id}"][data-k="${k}"]`);if(el&&el.tagName!=='SELECT'&&el.type!=='checkbox'){el.focus();try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}}}}
+  $('#main').innerHTML=html;window.scrollTo({top:y,behavior:'instant'});lockUI();
+  if(id){const el=document.querySelector(`[data-p="${id}"][data-k="${k}"]`);if(el&&el.tagName!=='SELECT'&&el.type!=='checkbox'){el.focus({preventScroll:true});try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}}}}
 function lockUI(){const r=Store.role;const lk=isLocked();const bn=$('#lockbn');if(bn)bn.remove();
   if(lk){const d=document.createElement('div');d.id='lockbn';d.className='note';d.style.marginBottom='14px';d.innerHTML='<b>Audit ini sudah final dan terkunci.</b> Nilai, rencana, dan laporan tidak bisa diubah; tindak lanjut dan unduhan tetap aktif.';$('#main').prepend(d)}
   if(r==='admin'&&!lk)return;
