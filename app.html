@@ -77,6 +77,8 @@ tbody tr:hover td,table tr:hover>td{background:color-mix(in srgb,var(--sunk) 70%
 .kpi b{display:block;font:600 26px/1.1 "Source Serif 4",Georgia,serif}.kpi span{font-size:12.5px;color:var(--mut)}
 .kpi .kt b{color:var(--kt)}.kpi .my b{color:var(--my)}.kpi .mn b{color:var(--mn)}
 details>summary{cursor:pointer;color:var(--pri);font-weight:500;padding:4px 0;list-style:revert}
+.pill.off{opacity:.5;text-decoration:line-through}.pill.pk{cursor:pointer;user-select:none}.pill.pk:hover{border-color:var(--pri)}.pill.W{background:var(--ps-bg);border-color:transparent}.pill.O{border-style:dashed}
+.meter{height:12px;border-radius:99px;background:var(--sunk);border:1px solid var(--line);overflow:hidden}.meter i{display:block;height:100%;background:var(--ps)}.meter.over i{background:var(--my)}
 .note{border-left:3px solid var(--hi);background:var(--sunk);padding:10px 14px;border-radius:0 var(--r) var(--r) 0;color:var(--mut)}
 .empty{padding:28px;text-align:center;color:var(--mut);border:1.5px dashed var(--line);border-radius:var(--r)}
 /* penampang SMKP */
@@ -161,7 +163,7 @@ function toast(t){const m=$('#msg');m.textContent=t;m.style.display='block';clea
 const DEF={
  ba:{auditi:'',izin:'IUP',komoditas:'',alamat:'',periode:'',
   kinerja:{'Kecelakaan cedera ringan':0,'Kecelakaan cedera berat':0,'Kecelakaan mati':0,'Frequency rate':0,'Severity rate':0,'Kejadian berbahaya':0,'Absence severity rate':0,'Morbidity frequency rate':0,'Kejadian akibat penyakit tenaga kerja':0,'Frekuensi penyakit akibat kerja':0},
-  faktor:[0,0,0,0,0,0,0],sertifikasi:0,pekerja:0,kelas:'tinggi',
+  faktor:[0,0,0,0,0,0,0],nas:{fr:0,sr:0,asr:0,mfr:0},sertifikasi:0,pekerja:0,kelas:'tinggi',
   tim1:[{nama:'',jabatan:'Ketua Tim Auditor',reg:''}],tim2:[{nama:'',jabatan:'Ketua Tim Auditor',reg:''}],skTim:'',skTgl:'',
   kontak:{tgl:'',media:'Pertemuan',wakil:'',jabatan:''},
   kelayakan:[1,1,1,1,1,1,1],kecukupan:[1,1,1,1,1,1,1],
@@ -171,7 +173,7 @@ const DEF={
  tindaklanjut:{},
  ofi:{items:[]},
  lap:{kantorPusat:'',alamat:'',izin:'',nomorIzin:'',komoditas:'',direktur:'',ktt:'',luas:'',pekerja:'',profilNarasi:'',latar1:'',latar2:'',periodeLaporan:'',kota:'',tglLaporan:'',tglRespon:'',respon1:'',respon2:'',respon3:'',operasional:[],produksi:[],peralatan:[],narasi:{I:'',II:'',III:'',IV:'',V:'',VI:'',VII:''},lampiranExtra:[],images:[]},
- plan:{batas:'',areas:[],manpower:[],params:{e:0.05,wwcFrac:10,obsCover:30,obsMin:3,periodeTR:'12 bulan terakhir'},tgl:'',jadwal:[],na:{}}
+ plan:{batas:'',areas:[],manpower:[],params:{e:0.05,wwcFrac:10,obsCover:30,obsMin:3,periodeTR:'12 bulan terakhir',mode:'standar',on:{KS:0,FGD:0,UKUR:0},auditors:2,jam:6,unit:{TD:15,TR:20,WWC:6,OBS:8,KS:180,FGD:90,UKUR:20}},tgl:'',jadwal:[],na:{},mo:{}}
 };
 let S={};
 const KD=['Kebijakan','Perencanaan','Organisasi dan Personel','Implementasi','Pemantauan, Evaluasi, dan Tindak Lanjut','Dokumentasi','Tinjauan Manajemen dan Peningkatan Kinerja'];
@@ -183,6 +185,7 @@ async function load(){
   const ks=Object.keys(DEF).filter(k=>k!=='tindaklanjut'),keys=['index','connections',...ks.map(K),K('tl_auditi'),K('tl_verif')];
   const m=await Store.mget(keys);
   ks.forEach(k=>{S[k]=Object.assign(JSON.parse(JSON.stringify(DEF[k])),m[K(k)]||{})});
+  {const d=DEF.plan.params,pp=S.plan.params||{};S.plan.params=Object.assign({},d,pp,{on:Object.assign({},d.on,pp.on||{}),unit:Object.assign({},d.unit,pp.unit||{})});S.plan.mo=S.plan.mo||{};S.ba.nas=Object.assign({fr:0,sr:0,asr:0,mfr:0},S.ba.nas||{});if(!S.ba.faktor)S.ba.faktor=[0,0,0,0,0,0,0]}
   const a=m[K('tl_auditi')]||{},v=m[K('tl_verif')]||{};S.tindaklanjut=a;for(const id in v)(S.tindaklanjut[id]=S.tindaklanjut[id]||{}).verif=v[id];
   S._reg=m['connections']||[];S._index=m['index']||[];if(!S._index.find(x=>x.id===Store.cur())){S._index.push({id:Store.cur(),label:'Audit '+Store.cur()});if(Store.role==='admin')await Store.set('index',S._index).catch(()=>{})}}
 const pend={};
@@ -215,7 +218,11 @@ function addRow(k,p,d){getp(S[k],p).push(JSON.parse(d));save(k);render()}
 function delRow(k,p,i){getp(S[k],p).splice(i,1);save(k);render()}
 
 // ---------- Tab: Berita Acara ----------
-function faktorPct(){return SMKP.faktorPct(S.ba.faktor.map(Boolean),S.ba.sertifikasi)}
+const KIN={fr:'Frequency rate',sr:'Severity rate',asr:'Absence severity rate',mfr:'Morbidity frequency rate'};
+function banding(){const b=S.ba,n=b.nas||{},k=b.kinerja,v=x=>Number(x)||0,hi=x=>v(n[x])>0&&v(k[KIN[x]])>v(n[x]);
+  return {kec:hi('fr')||hi('sr'),pen:hi('asr')||hi('mfr'),adaKec:v(n.fr)>0||v(n.sr)>0,adaPen:v(n.asr)>0||v(n.mfr)>0}}
+function effFaktor(){const f=S.ba.faktor.map(Boolean),c=banding();if(c.adaKec)f[3]=c.kec;if(c.adaPen)f[4]=c.pen;return f}
+function faktorPct(){return SMKP.faktorPct(effFaktor(),S.ba.sertifikasi)}
 function tabBA(){
   const b=S.ba,md=SMKP.mandays(MANDAY,Number(b.pekerja)||0,b.kelas,faktorPct());
   const rt=['Risiko','Nilai Risiko'];
@@ -227,7 +234,11 @@ function tabBA(){
   <h3>Kinerja keselamatan pertambangan pada periode audit</h3><div class="g2">${Object.keys(b.kinerja).map(x=>F(x,'ba','kinerja.'+x,'n')).join('')}</div></div>
 
   <div class="card"><h2>Dasar faktor penyesuaian &amp; hari kerja audit</h2>
-  <table>${FAK.map((f,i)=>`<tr><td>${i+1}</td><td>${f}</td><td style="width:70px"><label style="margin:0"><input type="checkbox" style="width:auto" ${b.faktor[i]?'checked':''} ${bind('faktor.'+i,'ba')} data-re="1"> Ya</label></td></tr>`).join('')}</table>
+  <h3>Rata-rata nasional pembanding</h3>
+  <p class="mu" style="margin-top:0">Isi rata-rata nasional untuk periode audit. Jika terisi, faktor nomor 4 dan 5 di bawah dicentang otomatis dengan membandingkannya terhadap nilai perusahaan pada tabel kinerja di atas. Jika dikosongkan, Anda mencentangnya sendiri.</p>
+  <table><tr><th>Indikator</th><th>Perusahaan</th><th>Rata-rata nasional</th><th>Hasil</th></tr>${Object.keys(KIN).map(x=>{const pv=Number(b.kinerja[KIN[x]])||0,nv=Number((b.nas||{})[x])||0;return `<tr><td>${KIN[x]} (${x.toUpperCase()})</td><td>${pv}</td><td><input type="number" step="any" style="width:110px" ${bind('nas.'+x,'ba','n')} data-re="1" value="${b.nas[x]||''}"></td><td>${nv>0?(pv>nv?'<span class="warn">di atas nasional</span>':'<span class="ok">sama atau di bawah</span>'):'<span class="mu">belum diisi</span>'}</td></tr>`}).join('')}</table>
+  <h3>Faktor penyesuaian</h3>
+  <table>${FAK.map((f,i)=>{const auto=(i===3&&banding().adaKec)||(i===4&&banding().adaPen),on=effFaktor()[i];return `<tr><td>${i+1}</td><td>${f}${auto?' <span class="mu">(otomatis dari perbandingan)</span>':''}</td><td style="width:70px"><label style="margin:0"><input type="checkbox" style="width:auto" ${on?'checked':''} ${auto?'disabled':bind('faktor.'+i,'ba')} data-re="1"> Ya</label></td></tr>`}).join('')}</table>
   <label><input type="checkbox" style="width:auto" ${b.sertifikasi?'checked':''} ${bind('sertifikasi','ba')} data-re="1"> Perusahaan telah tersertifikasi SMKP (faktor pengurang)</label>
   <div class="g2">${F('Jumlah pekerja auditi','ba','pekerja','n','data-re="1"')}
   <div><label>Kelas risiko</label><select ${bind('kelas','ba')} data-re="1">${['tinggi','menengah','rendah'].map(o=>`<option value="${o}" ${o==b.kelas?'selected':''}>${o}</option>`).join('')}</select></div></div>
@@ -266,6 +277,28 @@ function samples(){
   const pengawas=strata(),nW=Math.max(pengawas.length,Math.ceil(pengawas.reduce((s,x)=>s+x.N,0)*p.wwcFrac/100));
   const alloc=SMKP.stratified(pengawas,nW),ks=SMKP.slovin(totalMP(),p.e);
   return {obsAreas:ar.slice(0,k),allAreas:ar,wwc:alloc,nW:alloc.reduce((s,x)=>s+x.n,0),ks,N:totalMP(),p}}
+function mPrio(c,m){if(m==='TD'||m==='TR')return 'W';if(m==='WWC')return ['PEMAHAMAN','KOMUNIKASI','TUGAS'].includes(c.k)?'W':'S';if(m==='OBS')return c.k==='LAPANGAN'?'W':'S';return 'O'}
+function mDefault(c,m){const p=S.plan.params,pr=mPrio(c,m);if(p.mode==='lengkap')return true;if(pr==='W')return true;if(pr==='S')return p.mode==='standar';return p.mode!=='ringkas'&&!!p.on[m]}
+function mActive(it,i,c,m){const ov=S.plan.mo[it.id+'|'+i+'|'+m];return ov!=null?!!ov:mDefault(c,m)}
+function togMo(id,i,m){const it=MASTER.find(x=>x.id===id),c=it.cp[i],k=id+'|'+i+'|'+m,nw=!mActive(it,i,c,m);if(nw===mDefault(c,m))delete S.plan.mo[k];else S.plan.mo[k]=nw?1:0;save('plan');render()}
+const PL={W:'wajib',S:'disarankan',O:'opsional'};
+function workload(sm){const u=S.plan.params.unit,cnt={TD:0,TR:0,WWC:0,OBS:0,KS:0,FGD:0,UKUR:0};
+  MASTER.filter(i=>!S.plan.na[i.id]).forEach(it=>it.cp.forEach((c,i)=>c.m.forEach(m=>{if(mActive(it,i,c,m))cnt[m]++})));
+  const min={TD:cnt.TD*u.TD,TR:cnt.TR*u.TR,WWC:cnt.WWC*u.WWC,OBS:cnt.OBS?cnt.OBS*u.OBS+sm.obsAreas.length*30:0,KS:cnt.KS?u.KS:0,FGD:Math.ceil(cnt.FGD/3)*u.FGD,UKUR:cnt.UKUR*u.UKUR};
+  return {cnt,min,total:Object.values(min).reduce((a,b)=>a+b,0)/60}}
+function capHTML(sm,md){const p=S.plan.params,w=workload(sm),days=md?md.tahap2:0,cap=p.auditors*days*p.jam,over=cap&&w.total>cap,pc=cap?Math.min(100,w.total/cap*100):0;
+  const lab={TD:'Tinjauan dokumen',TR:'Tinjauan rekaman',WWC:'Wawancara',OBS:'Observasi',KS:'Kuesioner',FGD:'FGD',UKUR:'Pengukuran'};
+  return `<h3>Prioritas metode dan beban kerja</h3>
+  <p class="mu" style="margin-top:0">Atur metode yang diambil sesuai waktu dan jumlah auditor. Tinjauan dokumen dan rekaman selalu wajib. Klik label metode pada tabel di bawah untuk mengaktifkan atau melewati metode pada satu checkpoint.</p>
+  <div class="g2"><div><label>Mode pengambilan sampel</label><select ${bind('params.mode','plan')} data-re="1"><option value="lengkap" ${p.mode==='lengkap'?'selected':''}>Lengkap – semua metode</option><option value="standar" ${p.mode==='standar'?'selected':''}>Standar – wajib dan disarankan</option><option value="ringkas" ${p.mode==='ringkas'?'selected':''}>Ringkas – hanya yang wajib</option></select></div>
+  <div><label>Metode opsional (berlaku di mode Standar)</label><div class="row" style="margin:6px 0">${['KS','FGD','UKUR'].map(m=>`<label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--ink)"><input type="checkbox" ${p.on[m]?'checked':''} ${bind('params.on.'+m,'plan')} data-re="1"> ${lab[m]}</label>`).join('')}</div></div>
+  ${F('Jumlah auditor','plan','params.auditors','n','data-re="1" min="1"')}${F('Jam efektif per hari','plan','params.jam','n','data-re="1" min="1" max="12"')}</div>
+  <table><tr><th>Metode</th><th>Checkpoint aktif</th><th>Menit per satuan</th><th>Perkiraan jam</th></tr>${Object.keys(lab).map(m=>`<tr><td>${lab[m]}</td><td>${w.cnt[m]}</td><td><input type="number" style="width:90px" ${bind('params.unit.'+m,'plan','n')} data-re="1" value="${p.unit[m]}"></td><td>${(w.min[m]/60).toFixed(1)}</td></tr>`).join('')}<tr><th colspan="3">Total beban</th><th>${w.total.toFixed(1)} jam</th></tr></table>
+  ${md?`<div class="row" style="margin-bottom:2px"><span>Kapasitas Tahap II: <b>${cap.toFixed(0)} jam</b> (${p.auditors} auditor × ${days} hari × ${p.jam} jam)</span></div><div class="meter ${over?'over':''}"><i style="width:${pc}%"></i></div>
+  <p class="${over?'warn':'ok'}" style="margin:6px 0">${over?`Beban melebihi kapasitas ${(w.total-cap).toFixed(0)} jam. Coba mode Ringkas, matikan metode opsional, atau tambah auditor.`:`Beban muat dalam kapasitas; tersisa ${(cap-w.total).toFixed(0)} jam.`}</p>`:'<p class="warn">Isi jumlah pekerja di Berita Acara agar kapasitas waktu terhitung.</p>'}
+  <p class="mu" style="font-size:12.5px">Menit per satuan adalah perkiraan awal; sesuaikan dengan pengalaman tim. Wawancara dan observasi dihitung per checkpoint, FGD per tiga checkpoint, dan kuesioner sebagai satu paket tetap.</p>`}
+function cpPills(it,i,c,sm,withText){return c.m.map(m=>{const on=mActive(it,i,c,m),pr=mPrio(c,m);
+  return `<span class="pill pk ${on?pr:'off'}" role="button" tabindex="0" title="${PL[pr]} – klik untuk ${on?'melewati':'mengambil'} metode ini" onclick="togMo('${it.id}',${i},'${m}')" onkeydown="if(event.key==='Enter')togMo('${it.id}',${i},'${m}')">${MN[m]}</span>${withText?` <span class="mu">${on?sampleText(m,sm):'tidak diambil ('+PL[pr]+')'}</span><br>`:''}`}).join('')}
 function sampleText(m,sm){
   switch(m){
    case 'TD':return 'Seluruh dokumen terkait (100%, tanpa sampling)';
@@ -283,10 +316,10 @@ function tabPlan(){
   <h3>Manpower: pengawas per level × departemen</h3><p class="mu">Dasar wawancara (stratified). Baris level "Pekerja" dipakai untuk populasi kuesioner.</p>
   ${listTable('plan','manpower',[{h:'Departemen',f:'dept',re:1},{h:'Perusahaan',f:'pt'},{h:'Level',f:'level',sel:LEVEL,re:1},{h:'Jumlah',f:'jumlah',t:'n',re:1}],'Strata',{dept:'',pt:'IUP',level:'Pengawas Operasional',jumlah:0})}
   <h3>Parameter sampling</h3><div class="g2">${F('Margin error Slovin (e)','plan','params.e','n','step="0.01"')}${F('Wawancara: % pengawas (min 1/strata)','plan','params.wwcFrac','n','data-re="1"')}${F('Observasi: % area (risiko tertinggi dahulu)','plan','params.obsCover','n','data-re="1"')}${F('Observasi: minimal area','plan','params.obsMin','n','data-re="1"')}${F('Periode rekaman','plan','params.periodeTR')}</div>
-  ${md?`<p>Waktu audit: <b>${md.total}</b> hari (Tahap I ${md.tahap1}, Tahap II ${md.tahap2}) – dari Berita Acara.</p>`:''}</div>
+  ${capHTML(sm,md)}${md?`<p>Waktu audit: <b>${md.total}</b> hari (Tahap I ${md.tahap1}, Tahap II ${md.tahap2}) – dari Berita Acara.</p>`:''}</div>
   <div class="card"><h2>Metode &amp; sampel per kriteria</h2><p class="mu">Diturunkan dari kriteria nilai tertinggi setiap sub-elemen. Centang N/A bila tidak berlaku (masuk Pengecualian).</p>
   <table><tr><th style="width:55px">ID</th><th>Sub-elemen / checkpoint</th><th style="width:70px">N/A</th></tr>
-  ${MASTER.map(it=>{const na=pl.na[it.id];return `<tr><td><b>${it.id}</b></td><td><b>${esc(it.name)}</b> <span class="mu">(maks ${it.max})</span><details ${na?'':'open'}><summary class="mu">${it.cp.length} checkpoint</summary>${it.cp.map((c,i)=>`<div style="margin:5px 0;padding-left:8px;border-left:3px solid var(--bd)">${i+1}. ${esc(c.t)}<br>${c.m.map(m=>`<span class="pill">${MN[m]}</span> <span class="mu">${sampleText(m,sm)}</span>`).join('<br>')}</div>`).join('')}</details></td><td>${it.na?`<input type="checkbox" style="width:auto" ${na?'checked':''} onchange="S.plan.na['${it.id}']=this.checked?1:0;save('plan')">`:'<span class="mu">–</span>'}</td></tr>`}).join('')}</table></div>`}
+  ${MASTER.map(it=>{const na=pl.na[it.id];return `<tr><td><b>${it.id}</b></td><td><b>${esc(it.name)}</b> <span class="mu">(maks ${it.max})</span><details ${na?'':'open'}><summary class="mu">${it.cp.length} checkpoint</summary>${it.cp.map((c,i)=>`<div style="margin:5px 0;padding-left:8px;border-left:3px solid var(--line)">${i+1}. ${esc(cl(c.t))}<br>${cpPills(it,i,c,sm,true)}</div>`).join('')}</details></td><td>${it.na?`<input type="checkbox" style="width:auto" ${na?'checked':''} onchange="S.plan.na['${it.id}']=this.checked?1:0;save('plan')">`:'<span class="mu">–</span>'}</td></tr>`}).join('')}</table></div>`}
 
 
 // ---------- Penilaian ----------
@@ -311,7 +344,7 @@ function itemHTML(it){const na=S.plan.na[it.id],n=S.nilai[it.id]||{},k=kat(it),l
   ${na?'<span class="tag NA">N/A – dikeluarkan dari penilaian</span>':`<div class="score" role="group" aria-label="Nilai ${it.id}">${Array.from({length:Number(it.max)+1},(_,v)=>`<button type="button" class="${cur===v?'on '+scCls(v,Number(it.max)):''}" aria-pressed="${cur===v}" onclick="setNil('${it.id}',${cur===v?"''":v})">${v}</button>`).join('')}</div>${k?`<span class="tag ${k}">${k==='POSITIF'?'Sesuai':k[0]+k.slice(1).toLowerCase()}</span>`:''}`}</div>
   ${na?'':`${rub}<details><summary>Checkpoint, bukti, dan rubrik lengkap</summary>
   <p class="mu" style="margin:8px 0 4px">Checkpoint kriteria nilai tertinggi – metode sesuai tabel sampel Rencana Audit.</p>
-  ${it.cp.map((c,i)=>{const r=(n.cp||{})[i]||{};return `<div class="cp">${i+1}. ${esc(cl(c.t))}<div>${c.m.map(m=>`<span class="pill">${MN[m]}</span>`).join('')}</div>
+  ${it.cp.map((c,i)=>{const r=(n.cp||{})[i]||{};return `<div class="cp">${i+1}. ${esc(cl(c.t))}<div>${c.m.map(m=>`<span class="pill ${mActive(it,i,c,m)?'':'off'}" title="${mActive(it,i,c,m)?'diambil':'tidak diambil (ubah di Rencana Audit)'}">${MN[m]}</span>`).join('')}</div>
    <div class="row" style="margin:6px 0 0"><select style="width:140px" aria-label="Status checkpoint ${i+1}" onchange="setCp('${it.id}',${i},'st',this.value)">${['','Sesuai','Sebagian','Tidak sesuai'].map(o=>`<option ${o==r.st?'selected':''}>${o}</option>`).join('')}</select><input style="flex:1;min-width:220px" placeholder="Bukti: dokumen, rekaman, area, narasumber, dan jumlah sampel" value="${esc(r.bukti)}" oninput="setCp('${it.id}',${i},'bukti',this.value)"></div></div>`}).join('')}
   <div class="g2"><div><label>Masalah (untuk uraian ketidaksesuaian)</label><textarea oninput="setF('${it.id}','masalah',this.value)">${esc(n.masalah)}</textarea></div>
   <div><label>Lokasi dan pelaksana</label><textarea oninput="setF('${it.id}','lokasi',this.value)">${esc(n.lokasi)}</textarea></div>
