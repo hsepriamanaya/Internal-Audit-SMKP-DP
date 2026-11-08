@@ -163,7 +163,7 @@ function toast(t){const m=$('#msg');m.textContent=t;m.style.display='block';clea
 const DEF={
  ba:{auditi:'',izin:'IUP',komoditas:'',alamat:'',periode:'',
   kinerja:{'Kecelakaan cedera ringan':0,'Kecelakaan cedera berat':0,'Kecelakaan mati':0,'Frequency rate':0,'Severity rate':0,'Kejadian berbahaya':0,'Absence severity rate':0,'Morbidity frequency rate':0,'Kejadian akibat penyakit tenaga kerja':0,'Frekuensi penyakit akibat kerja':0},
-  faktor:[0,0,0,0,0,0,0],nas:{fr:0,sr:0,asr:0,mfr:0},sertifikasi:0,pekerja:0,kelas:'tinggi',
+  faktor:[0,0,0,0,0,0,0],nas:{fr:0,sr:0,asr:0,mfr:0},roster:[],sertifikasi:0,pekerja:0,kelas:'tinggi',
   tim1:[{nama:'',jabatan:'Ketua Tim Auditor',reg:''}],tim2:[{nama:'',jabatan:'Ketua Tim Auditor',reg:''}],skTim:'',skTgl:'',
   kontak:{tgl:'',media:'Pertemuan',wakil:'',jabatan:''},
   kelayakan:[1,1,1,1,1,1,1],kecukupan:[1,1,1,1,1,1,1],
@@ -208,7 +208,7 @@ function setp(o,p,v){const a=p.split('.');const l=a.pop();const t=a.reduce((x,c)
 document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.p)return;
   let v=t.type==='checkbox'?(t.checked?1:0):t.value;if(t.dataset.t==='n')v=v===''?'':Number(v);if(t.dataset.nn)v=Number(v);
   setp(S[t.dataset.k],t.dataset.p,v);save(t.dataset.k);});
-document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.re){render()}});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.re){setTimeout(render,0)}});
 function F(label,k,p,type,extra){const v=getp(S[k],p);return `<div><label>${label}</label><input ${bind(p,k,type)} value="${esc(v)}" ${type==='n'?'type="number"':type==='d'?'type="date"':''} ${extra||''}></div>`}
 function listTable(k,p,cols,addLabel,defRow){ // cols [{h,f,t}]
   const arr=getp(S[k],p);
@@ -223,7 +223,20 @@ function banding(){const b=S.ba,n=b.nas||{},k=b.kinerja,v=x=>Number(x)||0,hi=x=>
   return {kec:hi('fr')||hi('sr'),pen:hi('asr')||hi('mfr'),adaKec:v(n.fr)>0||v(n.sr)>0,adaPen:v(n.asr)>0||v(n.mfr)>0}}
 function effFaktor(){const f=S.ba.faktor.map(Boolean),c=banding();if(c.adaKec)f[3]=c.kec;if(c.adaPen)f[4]=c.pen;return f}
 function faktorPct(){return SMKP.faktorPct(effFaktor(),S.ba.sertifikasi)}
-function tabBA(){
+const JAB=['Ketua Tim Auditor','Auditor','Tenaga Ahli','Pengamat'];
+function syncTim(){const b=S.ba;let ch=false;if(!b.roster){b.roster=[];ch=true}
+  const nid=()=>'a'+Math.random().toString(36).slice(2,8);
+  b.roster.forEach(x=>{if(!x.rid){x.rid=nid();ch=true}});
+  ['tim1','tim2'].forEach(k=>(b[k]||[]).forEach(r=>{
+    if(!r.rid&&r.nama){let x=b.roster.find(y=>y.nama===r.nama);if(!x){x={rid:nid(),nama:r.nama,reg:r.reg||''};b.roster.push(x)}r.rid=x.rid;ch=true}
+    const x=b.roster.find(y=>y.rid===r.rid),n=x?x.nama:'',g=x?x.reg:'';
+    if(r.nama!==n||r.reg!==g){r.nama=n;r.reg=g;ch=true}
+    if(!x&&r.rid){r.rid='';ch=true}}));
+  if(ch)save('ba')}
+function timTable(k){const ro=S.ba.roster.filter(x=>x.nama);
+  return `<table><tr><th>Nama auditor</th><th>Jabatan</th><th>No. registrasi</th><th></th></tr>${S.ba[k].map((r,i)=>`<tr><td><select ${bind(k+'.'+i+'.rid','ba')} data-re="1"><option value="">${ro.length?'– pilih auditor –':'– isi daftar auditor dulu –'}</option>${ro.map(x=>`<option value="${x.rid}" ${x.rid===r.rid?'selected':''}>${esc(x.nama)}</option>`).join('')}</select></td><td><select ${bind(k+'.'+i+'.jabatan','ba')}>${JAB.map(o=>`<option ${o==r.jabatan?'selected':''}>${o}</option>`).join('')}</select></td><td>${r.reg?esc(r.reg):'<span class="mu">terisi otomatis</span>'}</td><td><button class="btn x" onclick="delRow('ba','${k}',${i})">×</button></td></tr>`).join('')}</table>
+  <div class="row"><button class="btn s" onclick="addRow('ba','${k}',${esc(JSON.stringify(JSON.stringify({nama:'',jabatan:'Auditor',reg:'',rid:''})))})">+ Anggota tim</button></div>`}
+function tabBA(){syncTim();
   const b=S.ba,md=SMKP.mandays(MANDAY,Number(b.pekerja)||0,b.kelas,faktorPct());
   const rt=['Risiko','Nilai Risiko'];
   return `
@@ -245,14 +258,14 @@ function tabBA(){
   ${md?`<div class="kpi"><div><b>${md.base}</b><span>Mandays tabel</span></div><div><b>${md.adj}</b><span>Faktor penyesuaian (${faktorPct()}%)</span></div><div><b>${md.total}</b><span>Total mandays</span></div><div><b>${md.tahap1}</b><span>Tahap I (maks 10%)</span></div><div><b>${md.tahap2}</b><span>Tahap II (min 90%)</span></div></div>`:'<p class="warn">Jumlah pekerja di luar tabel.</p>'}</div>
 
   <div class="card"><h2>II. Hasil permulaan audit &amp; peninjauan dokumen</h2>
-  <h3>Tim Audit Tahap I</h3>${F('Nomor &amp; tanggal SK pengangkatan tim','ba','skTim')}
-  ${listTable('ba','tim1',[{h:'Nama',f:'nama'},{h:'Jabatan',f:'jabatan',sel:['Ketua Tim Auditor','Auditor','Tenaga Ahli','Pengamat']},{h:'No. Registrasi Auditor',f:'reg'}],'Anggota tim',{nama:'',jabatan:'Auditor',reg:''})}
+  <h3>Daftar auditor</h3><p class="mu" style="margin-top:0">Isi nama dan nomor registrasi sekali di sini. Tim Tahap I dan II tinggal memilih dari daftar ini.</p>${listTable('ba','roster',[{h:'Nama auditor',f:'nama',re:1},{h:'No. registrasi auditor',f:'reg',re:1}],'Auditor',{rid:'',nama:'',reg:''})}<h3>Tim Audit Tahap I</h3>${F('Nomor &amp; tanggal SK pengangkatan tim','ba','skTim')}
+  ${timTable('tim1')}
   <h3>Kontak awal dengan auditi</h3><div class="g2">${F('Hari/Tanggal','ba','kontak.tgl','d')}${F('Media','ba','kontak.media')}${F('Perwakilan auditi','ba','kontak.wakil')}${F('Jabatan perwakilan','ba','kontak.jabatan')}</div>
   <h3>Kelayakan audit</h3><table>${KEL.map((k,i)=>`<tr><td>${i+1}</td><td>${k}</td><td style="width:110px"><select ${bind('kelayakan.'+i,'ba')} data-nn="1">${['Layak','Tidak layak'].map((o,j)=>`<option value="${1-j}" ${(!!b.kelayakan[i])==(j==0)?'selected':''}>${o}</option>`).join('')}</select></td></tr>`).join('')}</table>
   <h3>Kecukupan dokumentasi</h3><table>${KD.map((k,i)=>`<tr><td>Elemen ${['I','II','III','IV','V','VI','VII'][i]} ${k}</td><td style="width:110px"><select ${bind('kecukupan.'+i,'ba')} data-nn="1">${['Cukup','Tidak cukup'].map((o,j)=>`<option value="${1-j}" ${(!!b.kecukupan[i])==(j==0)?'selected':''}>${o}</option>`).join('')}</select></td></tr>`).join('')}</table></div>
 
   <div class="card"><h2>III. Persiapan audit lapangan</h2><h3>Tim Audit Tahap II</h3>
-  ${listTable('ba','tim2',[{h:'Nama',f:'nama'},{h:'Jabatan',f:'jabatan',sel:['Ketua Tim Auditor','Auditor','Tenaga Ahli','Pengamat']},{h:'No. Registrasi Auditor',f:'reg'}],'Anggota tim',{nama:'',jabatan:'Auditor',reg:''})}
+  ${timTable('tim2')}
   <h3>Top Risks (dasar ranking observasi)</h3>
   ${listTable('ba','topRisk',[{h:'Kegiatan',f:'kegiatan'},{h:'Kategori',f:'kat',sel:['Kritis','Tinggi','Sedang','Rendah']},{h:'Nilai risiko (1–25)',f:'nilai',t:'n'},{h:'Area/lokasi terkait',f:'area'}],'Top risk',{kegiatan:'',kat:'Tinggi',nilai:16,area:''})}
   ${[['faktor','Faktor penyebab dominan near miss/kejadian'],['lokasi','Lokasi kejadian (tren)'],['kegiatan','Jenis kegiatan terkait kejadian'],['jabatan','Jabatan terkait kejadian'],['deviasi','Deviasi hasil inspeksi'],['pak','Faktor penyebab penyakit tenaga kerja/PAK']].map(([k,l])=>`<h3>${l}</h3>`+listTable('ba','trend.'+k,[{h:'Uraian',f:'t'}],'Baris',{t:''})).join('')}
