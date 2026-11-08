@@ -128,7 +128,7 @@ dialog::backdrop{background:rgba(8,20,26,.55)}
 <div class="row" style="margin-top:0"><button type="button" class="btn s" onclick="App.link()">Salin tautan akses</button><button type="button" class="btn x" onclick="App.del()">Hapus dari daftar</button></div>
 <div id="regBox" class="hide note" style="margin-top:8px"><b>Daftar di spreadsheet.</b> Simpan daftar koneksi ini ke spreadsheet yang sedang terhubung, agar muncul di perangkat lain setelah Anda masuk sebagai auditor.<div class="row"><button type="button" class="btn s" onclick="App.saveReg()">Simpan daftar ke spreadsheet ini</button></div></div>
 <p class="mu" style="font-size:12.5px">Tautan akses hanya berisi alamat Web App, tanpa kunci.</p></form></dialog>
-<script src="config.js" onerror="void 0"></script><script>try{const m=location.hash.match(/[#&]u=([^&]+)/);if(m){const u=decodeURIComponent(m[1]);if(/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u))localStorage.setItem("smkp_url",u);history.replaceState(null,"",location.pathname+location.search)}}catch(e){}</script><script src="master_web.js"></script><script src="core.js"></script><script src="vendor/docx.iife.js"></script><script src="vendor/jszip.min.js"></script><script src="docgen.js"></script>
+<script src="config.js" onerror="void 0"></script><script>try{const m=location.hash.match(/[#&]u=([^&]+)/);if(m){const u=decodeURIComponent(m[1]);if(/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u))localStorage.setItem("smkp_url",u);history.replaceState(null,"",location.pathname+location.search)}}catch(e){}</script><script src="master_web.js"></script><script src="core.js"></script>
 <script>
 // ---------- Store: Apps Script bila dikonfigurasi, jika tidak localStorage ----------
 const Store={
@@ -344,8 +344,11 @@ function docData(){const L=temuan(),b=S.ba;
     bukti:x.it.cp.map((c,i)=>(n.cp||{})[i]&&n.cp[i].bukti?n.cp[i].bukti:null).filter(Boolean),
     ref:['Elemen '+x.it.el+' '+ELN[x.it.el],'Sub Elemen '+x.it.id+' '+x.it.name],uraian:x.txt,batas:S.plan.batas,auditor:aud,auditi:b.ktt,
     pj:t.pj,akar:t.akar,korektif:t.korektif,preventif:t.preventif,buktiTL:t.bukti,tglPerbaikan:t.tgl,verifikasi:t.verif}})}}
+let _docP;function ensureDoc(){if(window.DocGen)return Promise.resolve();if(_docP)return _docP;
+  const ld=src=>new Promise((ok,no)=>{const e=document.createElement('script');e.src=src;e.onload=ok;e.onerror=()=>no(new Error('Gagal memuat '+src+'. Periksa koneksi internet.'));document.head.appendChild(e)});
+  toast('Menyiapkan pembuat dokumen…');_docP=ld('vendor/jszip.min.js').then(()=>ld('vendor/docx.iife.js')).then(()=>ld('docgen.js')).catch(e=>{_docP=null;throw e});return _docP}
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
-async function exportDoc(kind){try{const d=docData();if(!d.ncs.length){toast('Belum ada ketidaksesuaian');return}
+async function exportDoc(kind){try{await ensureDoc();const d=docData();if(!d.ncs.length){toast('Belum ada ketidaksesuaian');return}
   const doc=kind==='L5'?DocGen.lampiran5(d):DocGen.lampiran6(d);dl(await DocGen.toBlob(doc),(kind==='L5'?'Lampiran 5 - Rekapitulasi Ketidaksesuaian':'Lampiran 6 - Formulir Ketidaksesuaian dan Tindak Lanjut')+'.docx')}catch(e){toast('Gagal membuat dokumen: '+e.message)}}
 function setTL(id,f,v){(S.tindaklanjut[id]=S.tindaklanjut[id]||{})[f]=v;save('tindaklanjut')}
 function tabTemuan(){const L=temuan();
@@ -393,7 +396,7 @@ function lapData(){const d=docData(),b=S.ba,sc=SMKP.skor(MASTER.map(i=>({id:i.id
   d.rows=[];let last='';MASTER.forEach(it=>{if(it.el!==last){d.rows.push({kind:'el',kode:it.el,nama:ELN[it.el]});last=it.el}const n=S.nilai[it.id]||{},k=kat(it),nc=temuan().find(x=>x.it.id===it.id);
     d.rows.push({kind:'sub',el:it.el,kode:it.id,nama:it.name,max:Number(it.max),nilai:S.plan.na[it.id]?'NA':(n.v===''||n.v==null?'':Number(n.v)),kat:k||'',ket:k==='POSITIF'?kesList().find(x=>x.id===it.id).ket:(n.masalah||''),no:nc?nc.no:''})});
   d.weights=SMKP.W;return d}
-async function exportAny(kind){try{const d=lapData();let doc,name;
+async function exportAny(kind){try{await ensureDoc();const d=lapData();let doc,name;
   if(kind==='L1'){dl(await DocGen.lampiran1(d),'Lampiran 1 - Form Penilaian.xlsx');return}
   if(kind==='L2')[doc,name]=[DocGen.lampiran2(d),'Lampiran 2 - Rencana Tindak Lanjut'];
   if(kind==='L3')[doc,name]=[DocGen.lampiran3(d),'Lampiran 3 - Formulir Kesesuaian'];
