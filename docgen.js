@@ -170,6 +170,123 @@ function laporan(d){
 
 async function toBlob(doc){return Packer.toBlob(doc)}
 async function toBuffer(doc){return Packer.toBuffer(doc)}
-const api={laporan,lampiran1,lampiran2,lampiran3,lampiran4,lampiran5,lampiran6,toBlob,toBuffer,fmtTgl};
+// ---- Berita Acara Hasil Pelaksanaan Tahapan Awal Audit Internal ----
+function beritaAcara(d){
+  const A4={width:11906,height:16838},M={top:1134,bottom:1134,left:1134,right:1134},W=11906-2268,F='Arial',Z=21;
+  const r=(t,o)=>new TextRun(Object.assign({text:String(t==null?'':t),font:F,size:Z},o||{}));
+  const p=(t,o)=>{o=o||{};const ls=String(t==null?'':t).split('\n');return new Paragraph({alignment:o.al||AlignmentType.LEFT,keepNext:o.keepNext,indent:o.ind?{left:o.ind}:undefined,spacing:{before:o.before||0,after:o.after==null?100:o.after,line:o.line||276},
+    children:ls.flatMap((l,i)=>[r(l,{bold:o.b,italics:o.i,size:o.size}),...(i<ls.length-1?[new TextRun({break:1})]:[])])})};
+  const h1=t=>p(t,{b:true,size:24,before:260,after:120,keepNext:true});
+  const h2=t=>p(t,{b:true,before:160,after:80,keepNext:true});
+  const c=(t,w,o)=>{o=o||{};return new TableCell({width:{size:w,type:WidthType.DXA},borders:BR,verticalAlign:VerticalAlign.CENTER,margins:{top:50,bottom:50,left:90,right:90},
+    shading:o.fill?{type:ShadingType.CLEAR,fill:o.fill,color:'auto'}:undefined,children:[p(t,{b:o.b,al:o.al,after:0})]})};
+  const hdr=(cols,w)=>new TableRow({tableHeader:true,cantSplit:true,children:cols.map((x,i)=>c(x,w[i],{b:true,fill:'D9D9D9',al:AlignmentType.CENTER}))});
+  const tbl=(rows,w)=>new Table({width:{size:w.reduce((a,b)=>a+b,0),type:WidthType.DXA},columnWidths:w,rows});
+  const row=(cells,w,o)=>new TableRow({cantSplit:true,children:cells.map((x,i)=>c(x,w[i],Object.assign({},o&&o[i])))});
+  const CT=AlignmentType.CENTER;
+  const kvT=(rows)=>{const w=[3600,W-3600];return tbl(rows.map(x=>row([x[0],x[1]],w)),w)};
+  const listT=(head,items,key)=>{const w=[700,W-700];return [tbl([hdr(['No',head],w),...(items.length?items:[{}]).map((x,i)=>row([i+1,x[key]||''],w,[{al:CT}]))],w),p('',{after:60})]};
+  const timT=a=>{const w=[700,3400,2400,W-6500];return tbl([hdr(['No','Nama','Jabatan','No Registrasi Auditor'],w),...a.map((x,i)=>row([i+1,x.nama,x.jabatan,x.reg],w,[{al:CT}]))],w)};
+  const b=d.ba,co=d.co,out=[];
+  out.push(p('FORMULIR BERITA ACARA HASIL PELAKSANAAN TAHAPAN AWAL AUDIT INTERNAL',{b:true,al:CT,size:26,after:40}),p('SISTEM MANAJEMEN KESELAMATAN PERTAMBANGAN',{b:true,al:CT,size:26,after:200}));
+  out.push(h1('I. INFORMASI PELAKSANAAN AUDIT SMKP'),h2('Data Perusahaan Auditi'));
+  out.push(kvT([['Nama perusahaan auditi',co],['Jenis perizinan',d.izin],['Jenis komoditas',b.komoditas||''],['Alamat perusahaan',b.alamat||''],['Periode audit',b.periode||'']]),p('',{after:60}));
+  out.push(h2('Data Kinerja Keselamatan Pertambangan pada Periode Audit'));
+  {const w=[W-1800,1800];out.push(tbl(d.kinerja.map(x=>row([x[0],x[1]],w,[{},{al:CT}])),w),p('',{after:60}))}
+  out.push(h2('Dasar Faktor Penyesuaian'));
+  {const w=[600,W-600-900-900,900,900];out.push(tbl([hdr(['No','Kondisi','Ya','Tidak'],w),...d.faktor.map((f,i)=>row([i+1,f[0],f[1]?'√':'',f[1]?'':'√'],w,[{al:CT},{},{al:CT},{al:CT}]))],w),p('',{after:60}))}
+  out.push(h2('Perhitungan Hari Kerja Audit dan Jumlah Auditor'));
+  out.push(kvT(d.hari),p('',{after:60}));
+  out.push(h1('II. HASIL PERMULAAN AUDIT DAN PENINJAUAN DOKUMEN'),h2('Penetapan Tim Audit Tahap I'));
+  out.push(p(`Kepala Teknik Tambang ${co} melalui Surat Pengangkatan Tim Audit ${b.skTim||'nomor …………'} telah menugaskan Tim Audit untuk Tahap Pertama Audit Internal Sistem Manajemen Keselamatan Pertambangan (Permulaan Audit, Peninjauan Dokumen, Persiapan Audit Lapangan), sebagai berikut:`,{al:AlignmentType.JUSTIFIED}),timT(d.tim1),p('',{after:60}));
+  out.push(h2('Pelaksanaan Kontak Awal dengan Auditi'),p('Kontak awal dengan auditi telah dilakukan secara formal/informal dengan rincian sebagai berikut:'));
+  out.push(kvT([['Hari / Tanggal',d.kontakTgl],['Media',b.kontak.media||''],['Perwakilan Auditi',b.kontak.wakil||''],['Jabatan Perwakilan Auditi',b.kontak.jabatan||'']]),p('',{after:60}));
+  out.push(h2('Penentuan Kelayakan Audit'),p(`Penentuan Kelayakan Audit Internal Sistem Manajemen Keselamatan Pertambangan dilakukan pada ${d.kelayakanTgl?'hari '+d.kelayakanTgl:'hari ………………'}, dengan hasil sebagai berikut:`,{al:AlignmentType.JUSTIFIED}));
+  {const w=[700,W-700-1800,1800];out.push(tbl([hdr(['No','Indikator Kelayakan Audit','Hasil Evaluasi'],w),...d.kelayakan.map((x,i)=>row([i+1,x[0],x[1]],w,[{al:CT},{},{al:CT}]))],w),p('',{after:60}))}
+  out.push(p(d.layak?`Dengan mempertimbangkan ketersediaan faktor-faktor tersebut di atas, maka pelaksanaan Audit Internal Sistem Manajemen Keselamatan Pertambangan di ${co} layak untuk dilaksanakan.`:`Dengan mempertimbangkan ketersediaan faktor-faktor tersebut di atas, maka pelaksanaan Audit Internal Sistem Manajemen Keselamatan Pertambangan di ${co} belum layak untuk dilaksanakan.`,{al:AlignmentType.JUSTIFIED}));
+  out.push(h2('Penentuan Kecukupan Dokumentasi'),p(`Peninjauan dokumentasi Sistem Manajemen Keselamatan Pertambangan mencakup dokumen dan rekaman milik ${co} pada periode audit, dengan memperhatikan ukuran, sifat dan kompleksitas organisasi, serta tujuan, dan ruang lingkup audit terhadap 7 (tujuh) elemen Sistem Manajemen Keselamatan Pertambangan sesuai Lampiran II Keputusan Direktur Jenderal Mineral dan Batubara Nomor 185.K/37.04/DJB/2019.`,{al:AlignmentType.JUSTIFIED}),p(`Hasil peninjauan dokumen Sistem Manajemen Keselamatan Pertambangan ${co} sebagai berikut:`));
+  {const w=[700,W-700-1800,1800];out.push(tbl([hdr(['No','Peninjauan Dokumentasi','Hasil / Evaluasi'],w),...d.kecukupan.map((x,i)=>row([i+1,x[0],x[1]],w,[{al:CT},{},{al:CT}]))],w),p('',{after:60}))}
+  out.push(p(d.cukup?`Berdasarkan hasil evaluasi tersebut di atas, maka pelaksanaan Audit Internal Sistem Manajemen Keselamatan Pertambangan di ${co} dapat dilanjutkan ke tahap berikutnya.`:`Berdasarkan hasil evaluasi tersebut di atas, terdapat dokumentasi yang belum cukup sehingga pelaksanaan audit di ${co} perlu menunggu kelengkapan dokumentasi.`,{al:AlignmentType.JUSTIFIED}));
+  out.push(h1('III. PERSIAPAN AUDIT LAPANGAN'),h2('Penetapan Tim Audit Tahap II'));
+  out.push(p(`Kepala Teknik Tambang ${co} melalui Surat Pengangkatan Tim Audit ${b.skTim||'nomor …………'} telah menugaskan Tim Audit untuk Tahap Kedua Audit Internal Sistem Manajemen Keselamatan Pertambangan (Pelaksanaan Rapat Pembukaan, Pengumpulan dan Verifikasi Informasi, Perumusan Temuan Audit, Penyiapan Kesimpulan Audit, Pelaksanaan Rapat Penutupan), sebagai berikut:`,{al:AlignmentType.JUSTIFIED}),timT(d.tim2),p('',{after:60}));
+  out.push(p('Penugasan tersebut telah mempertimbangkan tujuan, ruang lingkup, kriteria dan perkiraan waktu audit, kompetensi tim audit secara keseluruhan yang diperlukan untuk mencapai tujuan audit, peraturan perundang-undangan yang berlaku, kebutuhan untuk menjamin keindependenan tim audit dari kegiatan yang diaudit dan untuk menghindarkan konflik kepentingan, kemampuan anggota tim audit untuk berinteraksi secara efektif dengan auditi dan untuk bekerja bersama dalam tim, bahasa yang digunakan dalam audit, dan pemahaman terhadap karakteristik sosial dan budaya tertentu dari auditi. Seluruh auditor internal yang diangkat memiliki komitmen untuk menjaga integritas dan perilaku yang profesional, independen, jujur, dan objektif dalam pelaksanaan tugas, yang dibuktikan dengan surat penunjukan dan sertifikasi auditor.',{al:AlignmentType.JUSTIFIED}));
+  out.push(p('Auditor yang ditugaskan juga telah memperhatikan persyaratan yang ditetapkan pada Lampiran II Keputusan Direktur Jenderal Mineral dan Batubara nomor 185.K/37.04/DJB/2019 tentang Petunjuk Teknis Pelaksanaan Keselamatan Pertambangan dan Pelaksanaan, Penilaian, dan Pelaporan Sistem Manajemen Keselamatan Pertambangan dan Surat Edaran Direktur Teknik dan Lingkungan Mineral dan Batubara/Kepala Inspektur Tambang nomor B-7/MB.07/DBT.KP/2023 tanggal 3 Januari 2023 perihal Auditor Internal Sistem Manajemen Keselamatan Pertambangan.',{al:AlignmentType.JUSTIFIED}));
+  out.push(p(`Penetapan tanggung jawab auditor ditetapkan sesuai Prosedur Audit Internal Sistem Manajemen Keselamatan Pertambangan ${co} dan Surat Pengangkatan Tim Audit ${b.skTim||'nomor …………'}.`,{al:AlignmentType.JUSTIFIED}));
+  out.push(h2('Penyiapan Rencana Audit'),p(`Rencana Audit Internal Sistem Manajemen Keselamatan Pertambangan menjadi dasar kesepakatan antara klien audit, tim audit dan auditi terkait dengan pelaksanaan Audit Internal Sistem Manajemen Keselamatan Pertambangan Tahap II di ${co} yang meliputi kegiatan:`,{al:AlignmentType.JUSTIFIED}));
+  ['Pelaksanaan Rapat Pembukaan','Pengumpulan dan Verifikasi Informasi','Perumusan Temuan Audit','Penyiapan Kesimpulan Audit','Pelaksanaan Rapat Penutupan'].forEach((x,i)=>out.push(p((i+1)+'. '+x,{ind:400,after:30})));
+  out.push(p('Rencana Audit Internal Sistem Manajemen Keselamatan Pertambangan Tahap II mencakup:',{before:100}));
+  ['Penetapan Tujuan Audit','Penetapan Kriteria Audit','Penetapan Ruang Lingkup Audit','Penetapan Tanggal Pelaksanaan Audit','Penetapan Susunan Kegiatan Audit','Pembagian Tugas dan Tanggung Jawab Anggota Tim Audit','Penetapan Alokasi Sumberdaya terkait','Penetapan Metode dan Sampel Audit','Pengesahan Rencana Audit dari Kepala Teknik Tambang, Penanggung Jawab Operasional (untuk auditi yang merupakan perusahaan jasa pertambangan) dan Ketua Tim Audit'].forEach((x,i)=>out.push(p((i+1)+'. '+x,{ind:400,after:30})));
+  out.push(p(`Rencana audit yang memuat informasi angka nomor 1 (satu) s.d. 9 (sembilan) tersebut di atas ditetapkan secara lengkap pada Formulir Rencana Audit ${co}, mempertimbangkan bahwa program Audit Internal Sistem Manajemen Keselamatan Pertambangan wajib didasarkan pada hasil penilaian risiko pada kegiatan operasional dan hasil penilaian kinerja keselamatan pertambangan dari auditi, dan berikut informasi terkait dari ${co} yang wajib dipertimbangkan auditor dalam penetapan metode dan sampel khususnya sebagai critical point untuk jenis pembuktian primer:`,{before:100,al:AlignmentType.JUSTIFIED}));
+  const riskT=()=>{const w=[600,W-600-1500-1300,1500,1300];return tbl([hdr(['No','Kegiatan','Risiko','Nilai Risiko'],w),...(d.topRisk.length?d.topRisk:[{}]).map((x,i)=>row([i+1,x.kegiatan||'',x.kat||'',x.nilai==null?'':x.nilai],w,[{al:CT},{},{al:CT},{al:CT}]))],w)};
+  out.push(p(`Data Top Risks Aspek Keselamatan Pertambangan: Periode Audit ${d.thn} (Risk of Present)`,{b:true,before:120,keepNext:true}),riskT(),p('',{after:60}));
+  out.push(p(`Data Top Risks Aspek Keselamatan Pertambangan: Rencana Kegiatan ${d.thn} (Risk of Future)`,{b:true,before:120,keepNext:true}),riskT(),p('',{after:60}));
+  [['faktor','Faktor Penyebab Dominan',`Data Tren Faktor Penyebab Near Miss, Property Damage, Kejadian Berbahaya, dan/atau Kecelakaan di ${co} pada Periode Audit ${d.thn}`],
+   ['lokasi','Lokasi',`Data Tren Lokasi Terjadinya Near Miss, Property Damage, Kejadian Berbahaya, dan/atau Kecelakaan di ${co} pada Periode Audit ${d.thn}`],
+   ['kegiatan','Jenis Kegiatan',`Data Tren Jenis Kegiatan terkait Kejadian Near Miss, Property Damage, Kejadian Berbahaya, dan/atau Kecelakaan di ${co} pada Periode Audit ${d.thn}`],
+   ['jabatan','Jenis Jabatan',`Data Tren Jenis Jabatan terkait Kejadian Near Miss, Property Damage, Kejadian Berbahaya, dan/atau Kecelakaan di ${co} pada Periode Audit ${d.thn}`],
+   ['deviasi','Deviasi Penerapan Keselamatan Pertambangan Hasil Inspeksi',`Data Tren Deviasi Keselamatan Pertambangan berdasarkan Hasil Temuan Inspeksi di ${co} pada Periode Audit ${d.thn}`],
+   ['pak','Faktor Penyebab Dominan',`Data Tren Faktor Penyebab Kejadian Akibat Penyakit Tenaga Kerja dan/atau Penyakit Akibat Kerja di ${co} pada Periode Audit ${d.thn}`]
+  ].forEach(([k,hd,tt])=>{out.push(p(tt,{b:true,before:120,keepNext:true}),...listT(hd,b.trend[k]||[],'t'))});
+  out.push(p(`Data Unjuk Kerja Peralatan Pertambangan ${co} pada Periode Audit ${d.thn}`,{b:true,before:120,keepNext:true}));
+  {const w=[600,W-600-1500-1500,1500,1500];out.push(tbl([hdr(['No','Model','Jumlah','PA'],w),...(b.alat.length?b.alat:[{}]).map((x,i)=>row([i+1,x.model||'',x.n==null?'':x.n,x.pa==null||x.pa===''?'':x.pa+'%'],w,[{al:CT},{},{al:CT},{al:CT}]))],w),p('',{after:60}))}
+  out.push(p(`Data Capaian Key Leading Indicator ${co} pada Periode Audit ${d.thn}`,{b:true,before:120,keepNext:true}));
+  {const w=[600,W-600-2600,2600];out.push(tbl([hdr(['No','Key Leading Indicator','Status Pencapaian hingga Tanggal Pelaksanaan Audit'],w),...(b.kli.length?b.kli:[{}]).map((x,i)=>row([i+1,x.k||'',x.v==null||x.v===''?'':x.v+'%'],w,[{al:CT},{},{al:CT}]))],w),p('',{after:60}))}
+  out.push(p(`Data Audit Internal SMKP ${co} Tahun ${d.thn}`,{b:true,before:120,keepNext:true}));
+  {const a=b.auditLalu,w=[600,W-600-3600,3600],pc=v=>v===''||v==null?'':v+'%';out.push(tbl([hdr(['No','Data Audit Internal','Keterangan'],w),
+    ...[['Capaian nilai audit',pc(a.nilai)],['Status penyelesaian tindak lanjut audit untuk ketidaksesuaian kategori kritikal',pc(a.kritikal)],['Status penyelesaian tindak lanjut audit untuk ketidaksesuaian kategori mayor',pc(a.mayor)],['Status penyelesaian tindak lanjut audit untuk ketidaksesuaian kategori minor',pc(a.minor)],['Catatan hasil evaluasi dari instansi pembina sektor',a.catatan||'']].map((x,i)=>row([i+1,x[0],x[1]],w,[{al:CT}]))],w),p('',{after:60}))}
+  out.push(p(`Daftar Masukan Pemangku Kepentingan terkait Audit Internal SMKP berdasarkan Komunikasi dan Konsultasi Risiko yang dilakukan ${co} Tahun ${d.thn}`,{b:true,before:120,keepNext:true}),...listT('Masukan dari Pemangku Kepentingan',b.masukan||[],'t'));
+  out.push(h2('Penyiapan Dokumen Kerja'),p('Tim Audit Internal Sistem Manajemen Keselamatan Pertambangan menyiapkan dokumen kerja yang diperlukan untuk rujukan dan untuk merekam pelaksanaan audit internal. Dokumen kerja tersebut mencakup hal-hal sebagai berikut:',{al:AlignmentType.JUSTIFIED}));
+  [`Rencana sampling yang dimuat pada Formulir Rencana Audit ${co}`,'Kriteria audit yaitu Lampiran II Keputusan Direktur Jenderal Mineral dan Batubara Nomor 185.K/37.04/DJB/2019','Perangkat penunjang pengambilan data sesuai kebutuhan audit seperti: daftar pertanyaan wawancara terstruktur, daftar periksa observasi objek audit, kuesioner audit','Formulir pendokumentasian hasil audit, antara lain:'].forEach((x,i)=>out.push(p((i+1)+'. '+x,{ind:400,after:30})));
+  ['Formulir kesesuaian audit','Formulir ketidaksesuaian dan tindak lanjut ketidaksesuaian audit','Formulir rekapitulasi ketidaksesuaian','Formulir rencana tindak lanjut audit','Formulir rekomendasi dan peluang untuk perbaikan','Formulir rekaman rapat'].forEach((x,i)=>out.push(p(String.fromCharCode(97+i)+'. '+x,{ind:800,after:30})));
+  out.push(h1('PENUTUP'),p(`Berita Acara Hasil Pelaksanaan Tahapan Awal Audit Internal Sistem Manajemen Keselamatan Pertambangan ini dibuat pada tanggal ${d.tglBA||'………………'}, dan diketahui oleh klien audit, tim audit, serta auditor.`,{al:AlignmentType.JUSTIFIED}));
+  {const w=[1900,2900,2900,W-7700];const sg=(jab,nama)=>new TableRow({cantSplit:true,height:{value:1500,rule:'atLeast'},children:[c(jab,w[0],{b:true}),c('\n\n'+(nama||'')+'\n(Nama)',w[1],{al:CT}),c('\n\n…………………………\n(Tanda Tangan)',w[2],{al:CT}),c('\n\n'+(d.tglBA||'')+'\n(Tanggal)',w[3],{al:CT})]});
+   out.push(tbl([sg('Ketua Tim Audit',d.ketua),sg('Kepala Teknik Tambang',b.ktt)],w))}
+  return new Document({styles:{default:{document:{run:{font:F,size:Z}}}},sections:[{properties:{page:{size:A4,margin:M}},children:out}]})}
+
+
+// ---- Rencana Audit ----
+function rencanaAudit(d){
+  const A4={width:11906,height:16838},M={top:1134,bottom:1134,left:1134,right:1134},W=11906-2268,F='Arial',Z=20,CT=AlignmentType.CENTER;
+  const r=(t,o)=>new TextRun(Object.assign({text:String(t==null?'':t),font:F,size:Z},o||{}));
+  const p=(t,o)=>{o=o||{};const ls=String(t==null?'':t).split('\n');return new Paragraph({alignment:o.al||AlignmentType.LEFT,keepNext:o.keepNext,spacing:{before:o.before||0,after:o.after==null?40:o.after},
+    children:ls.flatMap((l,i)=>[r(l,{bold:o.b||(o.b1&&i===0),size:o.size}),...(i<ls.length-1?[new TextRun({break:1})]:[])])})};
+  const c=(t,w,o)=>{o=o||{};const kids=(Array.isArray(t)?t:[t]).map(x=>x instanceof Paragraph?x:p(x,{b:o.b,al:o.al,b1:o.b1}));
+    return new TableCell({width:{size:w,type:WidthType.DXA},columnSpan:o.span,borders:BR,verticalAlign:VerticalAlign.TOP,margins:{top:40,bottom:40,left:80,right:80},shading:o.fill?{type:ShadingType.CLEAR,fill:o.fill,color:'auto'}:undefined,children:kids})};
+  const tb=(rows,w)=>new Table({width:{size:w.reduce((a,b)=>a+b,0),type:WidthType.DXA},columnWidths:w,rows});
+  const tr=(cells,h)=>new TableRow({cantSplit:true,tableHeader:!!h,children:cells});
+  const list=a=>a.length?a.map((x,i)=>p((a.length>1?(i+1)+'. ':'')+x,{after:20})):[p('-')];
+  const out=[p('RENCANA AUDIT',{b:true,al:CT,size:26,after:20}),p('SISTEM MANAJEMEN KESELAMATAN PERTAMBANGAN',{b:true,al:CT,size:26,after:160})];
+  const w1=[2300,W-2300];const kv=(k,v)=>tr([c(k,w1[0],{b:true}),c(v,w1[1])]);
+  const lingkup=d.lingkup.flatMap(g=>[p(g.g,{b:true,after:10}),...g.a.map(x=>p('- '+x,{after:10}))]);
+  out.push(tb([kv('Jenis Audit','Audit Internal Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara'),kv('Kriteria Audit','Lampiran II Keputusan Direktur Jenderal Mineral dan Batubara Nomor 185.K/37.04/DJB/2019'),
+   kv('Nama Perusahaan',d.co),kv('Alamat',d.b.alamat||''),kv('Tanggal Pelaksanaan Audit',d.periode),kv('Tujuan Audit',list(d.tujuan)),kv('Ruang Lingkup Audit',lingkup.length?lingkup:[p('-')]),
+   kv('Pengecualian',list(d.pengecualian)),kv('Tim Audit',d.tim.length?d.tim.map(x=>p(x[0]+'\t: '+x[1],{after:10})):[p('-')]),
+   kv('Dokumentasi Relevan',list(['Manual Sistem Manajemen Keselamatan Pertambangan',...['Kebijakan','Perencanaan','Organisasi dan Personel','Implementasi','Pemantauan, Evaluasi, dan Tindak Lanjut','Dokumentasi','Tinjauan Manajemen dan Peningkatan Kinerja'].map(x=>'Dokumen dan Rekaman Elemen '+x)])),
+   kv('Fasilitas',list(['Ruangan (fisik & virtual) untuk rapat pembukaan dan rapat penutupan audit, diskusi dengan auditi (jika diperlukan) serta penyusunan laporan.','Peralatan dan perlengkapan penunjang pelaksanaan audit, termasuk audit lapangan.','Pemandu untuk pelaksanaan kontak dan waktu untuk wawancara, pengaturan kunjungan untuk bagian lokasi atau organisasi tertentu, pemastian bahwa aturan yang terkait dengan prosedur keselamatan dan keamanan di lokasi diketahui dan diperhatikan oleh anggota tim audit, penyaksian audit atas nama auditi, dan pemberian penjelasan atau bantuan dalam pengumpulan informasi.','APD (Safety Helmet, Safety Glasses, Mask, dan Safety Shoes).','Sarana transportasi ke lokasi objek audit.'])),
+   kv('Distribusi Laporan',list(d.distribusi))],w1));
+  out.push(new Paragraph({children:[new PageBreak()]}));
+  out.push(p('SUSUNAN KEGIATAN PELAKSANAAN AUDIT',{b:true,al:CT,size:24,after:20}),p('SISTEM MANAJEMEN KESELAMATAN PERTAMBANGAN',{b:true,al:CT,size:24,after:140}));
+  const w2=[1700,W-1700-2000,2000],H='D9D9D9';
+  const rows=[tr([c('Tanggal / Waktu',w2[0],{b:true,al:CT,fill:H}),c('Fungsi / Area / Departemen / Kegiatan yang akan diaudit (termasuk persyaratan terkait)',w2[1],{b:true,al:CT,fill:H}),c('Auditor',w2[2],{b:true,al:CT,fill:H})],true)];
+  if(!d.hari.length)rows.push(tr([c('Belum disusun. Isi tanggal mulai Tahap II lalu gunakan Susun otomatis di web.',W,{span:3})]));
+  d.hari.forEach(h=>{rows.push(tr([c(h.label,W,{span:3,b:true,fill:'F2F2F2'})]));
+    if(h.first)rows.push(tr([c('08.00 s.d 09.00',w2[0]),c('Pelaksanaan Rapat Pembukaan',w2[1]),c('Seluruh Anggota Tim',w2[2])]));
+    const act=a=>a.forEach(x=>rows.push(tr([c(x.w,w2[0]),c(x.k,w2[1],{b1:true}),c(x.a,w2[2])])));
+    act(h.pagi);if(h.pagi.length||h.siang.length)rows.push(tr([c('12.00 s.d 13.00',w2[0]),c('ISHOMA',w2[1]),c('',w2[2])]));act(h.siang);
+    if(!h.last)rows.push(tr([c('16.00 s.d 17.00',w2[0]),c('Penyelesaian Audit Hari '+h.h,w2[1]),c('',w2[2])]))});
+  out.push(tb(rows,w2));out.push(new Paragraph({children:[new PageBreak()]}));
+  out.push(p('METODE DAN SAMPEL AUDIT',{b:true,al:CT,size:24,after:20}),p('SISTEM MANAJEMEN KESELAMATAN PERTAMBANGAN',{b:true,al:CT,size:24,after:140}));
+  const w3=[800,2400,1700,W-4900],mr=[tr([c('NO',w3[0],{b:true,al:CT,fill:H}),c('KRITERIA',w3[1],{b:true,al:CT,fill:H}),c('METODE AUDIT',w3[2],{b:true,al:CT,fill:H}),c('SAMPEL',w3[3],{b:true,al:CT,fill:H})],true)];
+  let el='';
+  d.items.forEach(it=>{if(it.el!==el){el=it.el;mr.push(tr([c(el+'   '+String(d.ELN[el]||'').toUpperCase(),W,{span:4,b:true,fill:'F2F2F2'})]))}
+    if(it.na||!it.m.length){mr.push(tr([c(it.id,w3[0],{b:true}),c(it.name,w3[1]),c('N/A',w3[2],{al:CT}),c('Tidak berlaku / dikecualikan',w3[3])]));return}
+    it.m.forEach((m,i)=>mr.push(tr([c(i===0?it.id:'',w3[0],{b:true}),c(i===0?it.name:'',w3[1]),c(m.m,w3[2]),c(m.sampel,w3[3])])))});
+  out.push(tb(mr,w3));
+  out.push(p('Pengesahan Rencana Audit',{b:true,before:240,after:80,keepNext:true}));
+  const w4=[1900,2900,2900,W-7700],sg=(j,n)=>new TableRow({cantSplit:true,height:{value:1500,rule:'atLeast'},children:[c(j,w4[0],{b:true}),c('\n\n'+(n||'')+'\n(Nama)',w4[1],{al:CT}),c('\n\n…………………………\n(Tanda Tangan)',w4[2],{al:CT}),c('\n\n'+(d.tglBA||'')+'\n(Tanggal)',w4[3],{al:CT})]});
+  out.push(tb([sg('Ketua Tim Audit',d.ketua),sg('Kepala Teknik Tambang',d.ktt)],w4));
+  return new Document({styles:{default:{document:{run:{font:F,size:Z}}}},sections:[{properties:{page:{size:A4,margin:M}},children:out}]})}
+
+const api={rencanaAudit,beritaAcara,laporan,lampiran1,lampiran2,lampiran3,lampiran4,lampiran5,lampiran6,toBlob,toBuffer,fmtTgl};
 if(typeof module!=='undefined') module.exports=api; else root.DocGen=api;
 })(this);

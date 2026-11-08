@@ -166,14 +166,14 @@ const DEF={
   faktor:[0,0,0,0,0,0,0],nas:{fr:0,sr:0,asr:0,mfr:0},roster:[],sertifikasi:0,pekerja:0,kelas:'tinggi',
   tim1:[{nama:'',jabatan:'Ketua Tim Auditor',reg:''}],tim2:[{nama:'',jabatan:'Ketua Tim Auditor',reg:''}],skTim:'',skTgl:'',
   kontak:{tgl:'',media:'Pertemuan',wakil:'',jabatan:''},
-  kelayakan:[1,1,1,1,1,1,1],kecukupan:[1,1,1,1,1,1,1],
+  tglKelayakan:'',kelayakan:[1,1,1,1,1,1,1],kecukupan:[1,1,1,1,1,1,1],
   topRisk:[],trend:{faktor:[],lokasi:[],kegiatan:[],jabatan:[],deviasi:[],pak:[]},alat:[],kli:[],
   auditLalu:{nilai:'',kritikal:'',mayor:'',minor:'',catatan:''},masukan:[],tglBA:'',ktt:''},
  nilai:{},
  tindaklanjut:{},
  ofi:{items:[]},
  lap:{kantorPusat:'',alamat:'',izin:'',nomorIzin:'',komoditas:'',direktur:'',ktt:'',luas:'',pekerja:'',profilNarasi:'',latar1:'',latar2:'',periodeLaporan:'',kota:'',tglLaporan:'',tglRespon:'',respon1:'',respon2:'',respon3:'',operasional:[],produksi:[],peralatan:[],narasi:{I:'',II:'',III:'',IV:'',V:'',VI:'',VII:''},lampiranExtra:[],images:[]},
- plan:{batas:'',areas:[],manpower:[],params:{e:0.05,wwcFrac:10,obsCover:30,obsMin:3,periodeTR:'12 bulan terakhir',mode:'standar',on:{KS:0,FGD:0,UKUR:0},auditors:2,jam:6,unit:{TD:15,TR:20,WWC:6,OBS:8,KS:180,FGD:90,UKUR:20}},tgl:'',jadwal:[],na:{},mo:{}}
+ plan:{batas:'',areas:[],manpower:[],params:{e:0.05,wwcFrac:10,obsCover:30,obsMin:3,periodeTR:'12 bulan terakhir',mode:'standar',on:{KS:0,FGD:0,UKUR:0},auditors:2,jam:6,unit:{TD:15,TR:20,WWC:6,OBS:8,KS:180,FGD:90,UKUR:20}},tgl:'',provinsi:'',jadwal:[],na:{},mo:{}}
 };
 let S={};
 const KD=['Kebijakan','Perencanaan','Organisasi dan Personel','Implementasi','Pemantauan, Evaluasi, dan Tindak Lanjut','Dokumentasi','Tinjauan Manajemen dan Peningkatan Kinerja'];
@@ -185,7 +185,7 @@ async function load(){
   const ks=Object.keys(DEF).filter(k=>k!=='tindaklanjut'),keys=['index','connections',...ks.map(K),K('tl_auditi'),K('tl_verif')];
   const m=await Store.mget(keys);
   ks.forEach(k=>{S[k]=Object.assign(JSON.parse(JSON.stringify(DEF[k])),m[K(k)]||{})});
-  {const d=DEF.plan.params,pp=S.plan.params||{};S.plan.params=Object.assign({},d,pp,{on:Object.assign({},d.on,pp.on||{}),unit:Object.assign({},d.unit,pp.unit||{})});S.plan.mo=S.plan.mo||{};S.ba.nas=Object.assign({fr:0,sr:0,asr:0,mfr:0},S.ba.nas||{});if(!S.ba.faktor)S.ba.faktor=[0,0,0,0,0,0,0]}
+  {const d=DEF.plan.params,pp=S.plan.params||{};S.plan.params=Object.assign({},d,pp,{on:Object.assign({},d.on,pp.on||{}),unit:Object.assign({},d.unit,pp.unit||{})});S.plan.mo=S.plan.mo||{};S.plan.jadwal=S.plan.jadwal||[];S.ba.nas=Object.assign({fr:0,sr:0,asr:0,mfr:0},S.ba.nas||{});if(!S.ba.faktor)S.ba.faktor=[0,0,0,0,0,0,0]}
   const a=m[K('tl_auditi')]||{},v=m[K('tl_verif')]||{};S.tindaklanjut=a;for(const id in v)(S.tindaklanjut[id]=S.tindaklanjut[id]||{}).verif=v[id];
   S._reg=m['connections']||[];S._index=m['index']||[];if(!S._index.find(x=>x.id===Store.cur())){S._index.push({id:Store.cur(),label:'Audit '+Store.cur()});if(Store.role==='admin')await Store.set('index',S._index).catch(()=>{})}}
 const pend={};
@@ -261,7 +261,7 @@ function tabBA(){syncTim();
   <h3>Daftar auditor</h3><p class="mu" style="margin-top:0">Isi nama dan nomor registrasi sekali di sini. Tim Tahap I dan II tinggal memilih dari daftar ini.</p>${listTable('ba','roster',[{h:'Nama auditor',f:'nama',re:1},{h:'No. registrasi auditor',f:'reg',re:1}],'Auditor',{rid:'',nama:'',reg:''})}<h3>Tim Audit Tahap I</h3>${F('Nomor &amp; tanggal SK pengangkatan tim','ba','skTim')}
   ${timTable('tim1')}
   <h3>Kontak awal dengan auditi</h3><div class="g2">${F('Hari/Tanggal','ba','kontak.tgl','d')}${F('Media','ba','kontak.media')}${F('Perwakilan auditi','ba','kontak.wakil')}${F('Jabatan perwakilan','ba','kontak.jabatan')}</div>
-  <h3>Kelayakan audit</h3><table>${KEL.map((k,i)=>`<tr><td>${i+1}</td><td>${k}</td><td style="width:110px"><select ${bind('kelayakan.'+i,'ba')} data-nn="1">${['Layak','Tidak layak'].map((o,j)=>`<option value="${1-j}" ${(!!b.kelayakan[i])==(j==0)?'selected':''}>${o}</option>`).join('')}</select></td></tr>`).join('')}</table>
+  <h3>Kelayakan audit</h3>${F('Tanggal penentuan kelayakan','ba','tglKelayakan','d')}<table>${KEL.map((k,i)=>`<tr><td>${i+1}</td><td>${k}</td><td style="width:110px"><select ${bind('kelayakan.'+i,'ba')} data-nn="1">${['Layak','Tidak layak'].map((o,j)=>`<option value="${1-j}" ${(!!b.kelayakan[i])==(j==0)?'selected':''}>${o}</option>`).join('')}</select></td></tr>`).join('')}</table>
   <h3>Kecukupan dokumentasi</h3><table>${KD.map((k,i)=>`<tr><td>Elemen ${['I','II','III','IV','V','VI','VII'][i]} ${k}</td><td style="width:110px"><select ${bind('kecukupan.'+i,'ba')} data-nn="1">${['Cukup','Tidak cukup'].map((o,j)=>`<option value="${1-j}" ${(!!b.kecukupan[i])==(j==0)?'selected':''}>${o}</option>`).join('')}</select></td></tr>`).join('')}</table></div>
 
   <div class="card"><h2>III. Persiapan audit lapangan</h2><h3>Tim Audit Tahap II</h3>
@@ -274,7 +274,7 @@ function tabBA(){syncTim();
   <h3>Data audit internal tahun sebelumnya</h3><div class="g2">${F('Capaian nilai (%)','ba','auditLalu.nilai')}${F('Tindak lanjut Kritikal (%)','ba','auditLalu.kritikal')}${F('Tindak lanjut Mayor (%)','ba','auditLalu.mayor')}${F('Tindak lanjut Minor (%)','ba','auditLalu.minor')}</div>
   <label>Catatan hasil evaluasi instansi pembina</label><textarea ${bind('auditLalu.catatan','ba')}>${esc(b.auditLalu.catatan)}</textarea>
   <h3>Masukan pemangku kepentingan</h3>${listTable('ba','masukan',[{h:'Masukan',f:'t'}],'Masukan',{t:''})}
-  <h3>Penutup</h3><div class="g2">${F('Tanggal berita acara','ba','tglBA','d')}${F('Nama Kepala Teknik Tambang','ba','ktt')}</div></div>`}
+  <h3>Penutup</h3><div class="row"><button class="btn" onclick="exportBA()">Unduh Berita Acara (Word)</button></div><div class="g2">${F('Tanggal berita acara','ba','tglBA','d')}${F('Nama Kepala Teknik Tambang','ba','ktt')}</div></div>`}
 
 // ---------- Rencana Audit: metode & sampel ----------
 const MN={TD:'Tinjauan dokumen',TR:'Tinjauan rekaman',WWC:'Wawancara',KS:'Kuesioner',FGD:'FGD',OBS:'Observasi',UKUR:'Pengukuran'};
@@ -322,6 +322,40 @@ function sampleText(m,sm){
    case 'OBS':return sm.obsAreas.length?`Purposive risk-based: ${sm.obsAreas.map(a=>a.nama+(a.pelaksana&&a.pelaksana!=='IUP'?' ['+a.pelaksana+']':'')).join('; ')} (${sm.obsAreas.length} dari ${sm.allAreas.length} area)`:'<span class="warn">Isi area lingkup audit</span>';
    case 'UKUR':return 'Verifikasi titik ukur pada area risiko tertinggi: '+(sm.obsAreas.slice(0,3).map(a=>a.nama).join('; ')||'-');}
   return ''}
+function hariKerja(n){const out=[];if(!S.plan.tgl)return out;const d=new Date(S.plan.tgl+'T00:00:00');const f=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');while(out.length<n){const g=d.getDay();if(g!==0&&g!==6)out.push(f(d));d.setDate(d.getDate()+1)}return out}
+function auditorNames(){const a=S.ba.tim2.filter(x=>x.nama).map(x=>x.nama);const n=Math.max(1,Number(S.plan.params.auditors)||1);while(a.length<n)a.push('Auditor '+(a.length+1));return a.slice(0,Math.max(n,S.ba.tim2.filter(x=>x.nama).length))}
+function obsIds(){return MASTER.filter(i=>!S.plan.na[i.id]&&i.cp.some((c,k)=>c.m.includes('OBS')&&mActive(i,k,c,'OBS'))).map(i=>i.id)}
+function genJadwal(){const md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.kelas,faktorPct());
+  if(!md){toast('Isi jumlah pekerja di Berita Acara dulu');return}if(!S.plan.tgl){toast('Isi tanggal mulai Tahap II dulu');return}
+  const sm=samples(),au=auditorNames(),T=md.tahap2,ids=obsIds().join('; ');
+  const depts=[...new Set(S.plan.manpower.map(x=>(x.dept||'').trim()).filter(Boolean))],
+   q=[...(depts.length?depts:['seluruh departemen']).map(d=>'Office – '+d+'\nTinjauan Dokumen dan Rekaman\nElemen : sesuai tabel Metode dan Sampel'),
+       ...sm.obsAreas.map(a=>(a.grup?a.grup+' ':'Area ')+'('+a.nama+(a.pelaksana&&a.pelaksana!=='IUP'?' – '+a.pelaksana:'')+')\nObservasi\nElemen : '+ids)];
+  const rows=[];let n=0;
+  for(let h=1;h<T;h++){for(const sl of [['P',h===1?'09.00 s.d 12.00':'08.00 s.d 12.00'],['S','13.00 s.d 16.00']])for(const a of au){if(n<q.length)rows.push({h,s:sl[0],w:sl[1],k:q[n++],a})}}
+  const L=Math.max(1,...rows.map(r=>r.h))+1;rows.push({h:L,s:'P',w:'08.00 s.d 12.00',k:'Penyusunan temuan dan kesimpulan audit',a:'Seluruh Anggota Tim'},{h:L,s:'S',w:'13.00 s.d 15.00',k:'Pelaksanaan Rapat Penutupan',a:'Seluruh Anggota Tim'});
+  S.plan.jadwal=rows;save('plan');render();toast(n<q.length?(q.length-n)+' kegiatan tidak muat dalam '+(T-1)+' hari kerja lapangan; tambah auditor atau hari.':'Susunan kegiatan dibuat: '+L+' hari terpakai dari '+T+' hari alokasi Tahap II')}
+function jadwalHTML(){const pl=S.plan,md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.kelas,faktorPct());
+  return `<div class="card"><h2>Susunan kegiatan pelaksanaan audit</h2><p class="mu">Isi tanggal mulai Tahap II lalu susun otomatis: departemen untuk tinjauan dokumen dan area berisiko tertinggi untuk observasi dibagi ke auditor per sesi. Hasilnya bisa diubah baris demi baris.</p>
+  <div class="g2">${F('Tanggal mulai Tahap II','plan','tgl','d','data-re="1"')}${F('Provinsi (untuk distribusi laporan)','plan','provinsi')}</div>
+  <div class="row"><button class="btn" onclick="genJadwal()">${pl.jadwal.length?'Susun ulang otomatis':'Susun otomatis'}</button>${md?`<span class="mu">${md.tahap2} hari Tahap II, ${auditorNames().length} auditor</span>`:''}</div>
+  ${pl.jadwal.length?listTable('plan','jadwal',[{h:'Hari ke',f:'h',t:'n'},{h:'Sesi',f:'s',sel:['P','S']},{h:'Waktu',f:'w'},{h:'Kegiatan',f:'k'},{h:'Auditor',f:'a'}],'Kegiatan',{h:1,s:'P',w:'08.00 s.d 12.00',k:'',a:''}):''}
+  <div class="row" style="margin-top:12px"><button class="btn" onclick="exportRA()">Unduh Rencana Audit (Word)</button></div></div>`}
+function plain(h){return String(h).replace(/<[^>]+>/g,'')}
+function raData(){const b=S.ba,pl=S.plan,sm=samples(),md=SMKP.mandays(MANDAY,Number(b.pekerja)||0,b.kelas,faktorPct()),co=b.auditi||'………';
+  const days=md?hariKerja(md.tahap2):[],tglH=h=>days[h-1]?hariNama(days[h-1]):'';
+  const grp={};pl.areas.filter(a=>a.nama).forEach(a=>{(grp[a.grup||'Area']=grp[a.grup||'Area']||[]).push(a.nama+(a.pelaksana&&a.pelaksana!=='IUP'?' '+a.pelaksana:''))});
+  const T=Math.max(0,...pl.jadwal.map(r=>Number(r.h)||0));
+  const hari=[];for(let h=1;h<=T;h++){const r=pl.jadwal.filter(x=>Number(x.h)===h);if(!r.length)continue;hari.push({label:'Hari '+(['Pertama','Kedua','Ketiga','Keempat','Kelima','Keenam','Ketujuh','Kedelapan','Kesembilan','Kesepuluh','Kesebelas','Kedua belas','Ketiga belas','Keempat belas','Kelima belas','Keenam belas','Ketujuh belas','Kedelapan belas','Kesembilan belas','Kedua puluh'][h-1]||'ke-'+h)+(tglH(h)?' ('+tglH(h)+')':''),h,first:h===1,last:h===T,pagi:r.filter(x=>x.s==='P'),siang:r.filter(x=>x.s!=='P')})}
+  const ar=['Lead Auditor','Auditor'];const tim=b.tim2.filter(x=>x.nama);
+  const items=MASTER.map(it=>({el:it.el,id:it.id,name:it.name,na:!!pl.na[it.id],m:pl.na[it.id]?[]:['TD','TR','WWC','KS','FGD','OBS','UKUR'].map(m=>{const cps=it.cp.map((c,i)=>({c,i})).filter(x=>x.c.m.includes(m)&&mActive(it,x.i,x.c,m));
+     if(!cps.length)return null;const sampel=(m==='TD'||m==='TR')?[plain(sampleText(m,sm)),...cps.map(x=>'- '+cl(x.c.t))]:[plain(sampleText(m,sm))];return {m:MN[m],sampel}}).filter(Boolean)}));
+  return {co,b,izin:b.izin,periode:b.periode||'',tujuan:[`Penentuan tingkat kesesuaian SMKP ${co} atau bagiannya, dengan kriteria audit.`,`Evaluasi kemampuan SMKP untuk menjamin pemenuhan persyaratan peraturan perundang-undangan pada ${co}.`,`Evaluasi keefektifan SMKP dalam memenuhi tujuan yang ditetapkan pada ${co}.`,`Identifikasi penerapan SMKP yang potensial untuk ditingkatkan pada ${co}.`],
+   lingkup:Object.keys(grp).map(g=>({g,a:grp[g]})),pengecualian:MASTER.filter(i=>pl.na[i.id]).map(i=>i.id+' '+i.name),
+   tim:tim.map(x=>[/Ketua/.test(x.jabatan)?'Lead Auditor':x.jabatan,x.nama]),
+   distribusi:[(S.lap.direktur?'Direktur Operasi '+co:'Direktur Operasi '+co)+' (Asli)','Kepala Teknik Tambang '+co+' (Salinan)','Tim Audit (Salinan)','Direktur Teknik dan Lingkungan Mineral dan Batubara/ Kepala Inspektur Tambang, Kementerian ESDM (Salinan)','Kepala Dinas ESDM Provinsi '+(pl.provinsi||'………')+' (Salinan)'],
+   hari,items,ELN,ketua:(b.tim2.find(x=>/Ketua/.test(x.jabatan))||b.tim2[0]||{}).nama||'',ktt:b.ktt,tglBA:b.tglBA?DocGen.fmtTgl(b.tglBA):''}}
+async function exportRA(){try{await ensureDoc();dl(await DocGen.toBlob(DocGen.rencanaAudit(raData())),'Rencana Audit.docx')}catch(e){toast('Gagal membuat dokumen: '+e.message);console.error(e)}}
 function tabPlan(){
   const sm=samples(),pl=S.plan,md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.kelas,faktorPct());
   return `<div class="card"><h2>Lingkup audit: area &amp; pelaksana</h2><p class="mu">Area milik IUP maupun area kontraktor (mis. PIT yang dioperasikan PT AMM). Risiko 1–25 diambil dari Top Risks bila namanya cocok; angka manual dipakai bila lebih tinggi.</p>
@@ -330,6 +364,7 @@ function tabPlan(){
   ${listTable('plan','manpower',[{h:'Departemen',f:'dept',re:1},{h:'Perusahaan',f:'pt'},{h:'Level',f:'level',sel:LEVEL,re:1},{h:'Jumlah',f:'jumlah',t:'n',re:1}],'Strata',{dept:'',pt:'IUP',level:'Pengawas Operasional',jumlah:0})}
   <h3>Parameter sampling</h3><div class="g2">${F('Margin error Slovin (e)','plan','params.e','n','step="0.01"')}${F('Wawancara: % pengawas (min 1/strata)','plan','params.wwcFrac','n','data-re="1"')}${F('Observasi: % area (risiko tertinggi dahulu)','plan','params.obsCover','n','data-re="1"')}${F('Observasi: minimal area','plan','params.obsMin','n','data-re="1"')}${F('Periode rekaman','plan','params.periodeTR')}</div>
   ${capHTML(sm,md)}${md?`<p>Waktu audit: <b>${md.total}</b> hari (Tahap I ${md.tahap1}, Tahap II ${md.tahap2}) – dari Berita Acara.</p>`:''}</div>
+  ${jadwalHTML()}
   <div class="card"><h2>Metode &amp; sampel per kriteria</h2><p class="mu">Diturunkan dari kriteria nilai tertinggi setiap sub-elemen. Centang N/A bila tidak berlaku (masuk Pengecualian).</p>
   <table><tr><th style="width:55px">ID</th><th>Sub-elemen / checkpoint</th><th style="width:70px">N/A</th></tr>
   ${MASTER.map(it=>{const na=pl.na[it.id];return `<tr><td><b>${it.id}</b></td><td><b>${esc(it.name)}</b> <span class="mu">(maks ${it.max})</span><details ${na?'':'open'}><summary class="mu">${it.cp.length} checkpoint</summary>${it.cp.map((c,i)=>`<div style="margin:5px 0;padding-left:8px;border-left:3px solid var(--line)">${i+1}. ${esc(cl(c.t))}<br>${cpPills(it,i,c,sm,true)}</div>`).join('')}</details></td><td>${it.na?`<input type="checkbox" style="width:auto" ${na?'checked':''} onchange="S.plan.na['${it.id}']=this.checked?1:0;save('plan')">`:'<span class="mu">–</span>'}</td></tr>`}).join('')}</table></div>`}
@@ -399,6 +434,19 @@ let _docP;function ensureDoc(){if(window.DocGen)return Promise.resolve();if(_doc
   const ld=src=>new Promise((ok,no)=>{const e=document.createElement('script');e.src=src;e.onload=ok;e.onerror=()=>no(new Error('Gagal memuat '+src+'. Periksa koneksi internet.'));document.head.appendChild(e)});
   toast('Menyiapkan pembuat dokumen…');_docP=ld('vendor/jszip.min.js').then(()=>ld('vendor/docx.iife.js')).then(()=>ld('docgen.js')).catch(e=>{_docP=null;throw e});return _docP}
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+
+function hariNama(s){if(!s)return '';const d=new Date(s);return isNaN(d)?s:['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][d.getDay()]+', '+DocGen.fmtTgl(s)}
+function baData(){syncTim();const b=S.ba,md=SMKP.mandays(MANDAY,Number(b.pekerja)||0,b.kelas,faktorPct()),ef=effFaktor(),thn=(String(b.periode).match(/20\d\d/)||[String(b.tglBA||'').slice(0,4)||new Date().getFullYear()])[0];
+  const ketua=(b.tim2.find(x=>/Ketua/.test(x.jabatan))||b.tim2[0]||{}).nama||'';
+  return {ba:b,co:b.auditi||'………',izin:({IUP:'Izin Usaha Pertambangan (IUP)',IUPK:'Izin Usaha Pertambangan Khusus (IUPK)'})[b.izin]||b.izin||'',thn,
+   kinerja:Object.keys(b.kinerja).map(k=>[k.replace(/^(Kecelakaan )(.*)$/,(m,a,c)=>'Jumlah kecelakaan tambang berakibat '+c).replace(/^Frequency rate$/,'Frequency rate kecelakaan tambang').replace(/^Severity rate$/,'Severity rate kecelakaan tambang').replace(/^Kejadian berbahaya$/,'Jumlah kejadian berbahaya').replace(/^Kejadian akibat penyakit tenaga kerja$/,'Jumlah kejadian akibat penyakit tenaga kerja').replace(/^Frekuensi penyakit akibat kerja$/,'Frekuensi penyakit akibat kerja'),b.kinerja[k]]),
+   faktor:FAK.map((f,i)=>[f,ef[i]]),
+   hari:md?[['Jumlah pekerja auditi',b.pekerja],['Kelas risiko','Risiko '+(b.kelas||'').charAt(0).toUpperCase()+(b.kelas||'').slice(1)],['Mandays',md.base],['Faktor penyesuaian',md.adj],['Total mandays',md.total],['Alokasi mandays untuk tahap I audit (maksimal 10% dari total)',md.tahap1],['Alokasi mandays untuk tahap II audit (minimal 90% dari total)',md.tahap2]]:[['Jumlah pekerja auditi',b.pekerja||'']],
+   tim1:b.tim1.filter(x=>x.nama),tim2:b.tim2.filter(x=>x.nama),ketua,kontakTgl:hariNama(b.kontak.tgl),kelayakanTgl:hariNama(b.tglKelayakan),
+   kelayakan:KEL.map((k,i)=>[(i<3?'Informasi untuk pengembangan program audit: ':'')+k,b.kelayakan[i]?'Layak':'Tidak layak']),layak:b.kelayakan.every(Boolean),
+   kecukupan:KD.map((k,i)=>['Elemen '+['I','II','III','IV','V','VI','VII'][i]+' '+k,b.kecukupan[i]?'Cukup':'Tidak cukup']),cukup:b.kecukupan.every(Boolean),
+   topRisk:b.topRisk.slice().sort((x,y)=>(y.nilai||0)-(x.nilai||0)),tglBA:b.tglBA?DocGen.fmtTgl(b.tglBA):''}}
+async function exportBA(){try{await ensureDoc();const d=baData();dl(await DocGen.toBlob(DocGen.beritaAcara(d)),'Berita Acara Tahap Awal Audit Internal.docx')}catch(e){toast('Gagal membuat dokumen: '+e.message);console.error(e)}}
 async function exportDoc(kind){try{await ensureDoc();const d=docData();if(!d.ncs.length){toast('Belum ada ketidaksesuaian');return}
   const doc=kind==='L5'?DocGen.lampiran5(d):DocGen.lampiran6(d);dl(await DocGen.toBlob(doc),(kind==='L5'?'Lampiran 5 - Rekapitulasi Ketidaksesuaian':'Lampiran 6 - Formulir Ketidaksesuaian dan Tindak Lanjut')+'.docx')}catch(e){toast('Gagal membuat dokumen: '+e.message)}}
 function setTL(id,f,v){(S.tindaklanjut[id]=S.tindaklanjut[id]||{})[f]=v;save('tindaklanjut')}
