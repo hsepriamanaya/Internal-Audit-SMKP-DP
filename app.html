@@ -113,22 +113,27 @@ dialog::backdrop{background:rgba(8,20,26,.55)}
  <div><label for="auditSel">Audit aktif</label><select id="auditSel" onchange="pilihAudit(this.value)"></select></div>
  <ul class="steps" id="nav"></ul>
  <div class="railfoot"><span class="chip"><i class="dot" id="sdot"></i><span id="sync">lokal</span></span><span class="chip" id="who"></span>
-  <button class="btn" onclick="App.cfg()">Koneksi</button><button class="btn hide" id="btnOut" onclick="App.out()">Keluar</button></div>
+  <button class="btn" onclick="flush()">Simpan sekarang</button><button class="btn" onclick="App.cfg()">Koneksi</button><button class="btn hide" id="btnOut" onclick="App.out()">Keluar</button></div>
 </aside>
 <div class="work"><header class="top"><div class="grow"><h1 id="ttl"></h1><p id="sub"></p></div><div id="act"></div></header><main id="main"></main></div>
 </div>
 <div id="msg" role="status" aria-live="polite"></div>
-<dialog id="dlg"><form method="dialog" onsubmit="return App.saveCfg(event)"><h2>Hubungkan ke Google Sheets</h2>
-<p class="mu">Isi URL Web App dan kunci akses sesuai peran Anda. Kosongkan URL untuk bekerja secara lokal di browser ini.</p>
+<dialog id="dlg"><form method="dialog" onsubmit="return App.saveCfg(event)"><h2>Koneksi spreadsheet</h2>
+<p class="mu">Pilih koneksi tersimpan atau tambahkan yang baru. Kunci akses tidak disimpan setelah Anda keluar.</p>
+<label for="cfgSel">Koneksi tersimpan</label><select id="cfgSel" onchange="App.pick(this.value)"></select>
+<label for="cfgName">Nama koneksi</label><input id="cfgName" placeholder="mis. Audit 2026 – PT Dizamatra" autocomplete="off">
 <label for="cfgUrl">URL Web App</label><input id="cfgUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
 <label for="cfgKey">Kunci akses</label><input id="cfgKey" type="password" autocomplete="off"><p class="err" id="cfgErr"></p>
-<div class="row"><button class="btn">Hubungkan</button><button type="button" class="btn s" onclick="dlg.close()">Batal</button></div></form></dialog>
-<script src="master_web.js"></script><script src="core.js"></script><script src="vendor/docx.iife.js"></script><script src="vendor/jszip.min.js"></script><script src="docgen.js"></script>
+<div class="row"><button class="btn">Hubungkan</button><button type="button" class="btn s" onclick="dlg.close()">Batal</button></div>
+<div class="row" style="margin-top:0"><button type="button" class="btn s" onclick="App.link()">Salin tautan akses</button><button type="button" class="btn x" onclick="App.del()">Hapus dari daftar</button></div>
+<div id="regBox" class="hide note" style="margin-top:8px"><b>Daftar di spreadsheet.</b> Simpan daftar koneksi ini ke spreadsheet yang sedang terhubung, agar muncul di perangkat lain setelah Anda masuk sebagai auditor.<div class="row"><button type="button" class="btn s" onclick="App.saveReg()">Simpan daftar ke spreadsheet ini</button></div></div>
+<p class="mu" style="font-size:12.5px">Tautan akses hanya berisi alamat Web App, tanpa kunci.</p></form></dialog>
+<script src="config.js" onerror="void 0"></script><script>try{const m=location.hash.match(/[#&]u=([^&]+)/);if(m){const u=decodeURIComponent(m[1]);if(/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u))localStorage.setItem("smkp_url",u);history.replaceState(null,"",location.pathname+location.search)}}catch(e){}</script><script src="master_web.js"></script><script src="core.js"></script><script src="vendor/docx.iife.js"></script><script src="vendor/jszip.min.js"></script><script src="docgen.js"></script>
 <script>
 // ---------- Store: Apps Script bila dikonfigurasi, jika tidak localStorage ----------
 const Store={
   role:'admin',cur(){try{return localStorage.getItem('smkp_cur')||'a1'}catch(e){return'a1'}},
-  url(){try{return localStorage.getItem('smkp_url')||''}catch(e){return''}},
+  url(){try{return localStorage.getItem('smkp_url')||window.SMKP_DEFAULT_URL||''}catch(e){return window.SMKP_DEFAULT_URL||''}},
   key(){try{return sessionStorage.getItem('smkp_key')||''}catch(e){return''}},
   async get(k){
     if(this.url()){const r=await this.call({a:'get',key:k});return r.value?JSON.parse(r.value):null}
@@ -170,18 +175,24 @@ const KEL=['Profil organisasi','Profil risiko','Data kinerja keselamatan pertamb
 const LEVEL=['Pengawas Operasional','Pengawas Teknik','Manajerial','Pekerja'];
 const K=k=>Store.cur()+'/'+k;
 async function load(){
-  const ks=Object.keys(DEF).filter(k=>k!=='tindaklanjut'),keys=['index',...ks.map(K),K('tl_auditi'),K('tl_verif')];
+  const ks=Object.keys(DEF).filter(k=>k!=='tindaklanjut'),keys=['index','connections',...ks.map(K),K('tl_auditi'),K('tl_verif')];
   const m=await Store.mget(keys);
   ks.forEach(k=>{S[k]=Object.assign(JSON.parse(JSON.stringify(DEF[k])),m[K(k)]||{})});
   const a=m[K('tl_auditi')]||{},v=m[K('tl_verif')]||{};S.tindaklanjut=a;for(const id in v)(S.tindaklanjut[id]=S.tindaklanjut[id]||{}).verif=v[id];
-  S._index=m['index']||[];if(!S._index.find(x=>x.id===Store.cur())){S._index.push({id:Store.cur(),label:'Audit '+Store.cur()});if(Store.role==='admin')await Store.set('index',S._index).catch(()=>{})}}
+  S._reg=m['connections']||[];S._index=m['index']||[];if(!S._index.find(x=>x.id===Store.cur())){S._index.push({id:Store.cur(),label:'Audit '+Store.cur()});if(Store.role==='admin')await Store.set('index',S._index).catch(()=>{})}}
 const pend={};
 function isLocked(){const x=(S._index||[]).find(i=>i.id===Store.cur());return !!(x&&x.locked)}
-function save(k){if(Store.role==='reader')return;clearTimeout(pend[k]);pend[k]=setTimeout(async()=>{try{
+const dirty={};
+function stamp(){const d=new Date();return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}).replace('.',':')}
+function save(k){if(Store.role==='reader')return;dirty[k]=1;$('#sync').textContent='menyimpan…';clearTimeout(pend[k]);pend[k]=setTimeout(()=>doSave(k),600)}
+async function doSave(k){try{
   if(k==='tindaklanjut'){const a={},v={};for(const id in S.tindaklanjut){const {verif,...r}=S.tindaklanjut[id];a[id]=r;if(verif)v[id]=verif}
     await Store.set(K('tl_auditi'),a);if(Store.role!=='auditee')await Store.set(K('tl_verif'),v)}
-  else{if(Store.role==='auditee'||isLocked())return;await Store.set(K(k),S[k])}
-  $('#sync').textContent=Store.url()?'tersimpan (cloud)':'tersimpan (lokal)'}catch(e){$('#sync').textContent='GAGAL simpan';toast('Gagal simpan: '+e.message)}},600)}
+  else{if(Store.role!=='auditee'&&!isLocked())await Store.set(K(k),S[k])}
+  delete dirty[k];if(!Object.keys(dirty).length)$('#sync').textContent='tersimpan '+stamp()+(Store.url()?' (cloud)':' (lokal)')}
+  catch(e){$('#sync').textContent='GAGAL simpan';toast('Gagal menyimpan: '+(e.message==='locked'?'audit sudah dikunci':e.message)+'. Perubahan tetap di layar; coba "Simpan sekarang".')}}
+function flush(){const ks=Object.keys(dirty);if(!ks.length){toast('Semua perubahan sudah tersimpan');return}ks.forEach(k=>{clearTimeout(pend[k]);doSave(k)})}
+window.addEventListener('beforeunload',e=>{if(Object.keys(dirty).length){Object.keys(dirty).forEach(k=>{clearTimeout(pend[k]);doSave(k)});e.preventDefault();e.returnValue=''}});
 // ---------- helpers form ----------
 function bind(path,k,type){return `data-p="${path}" data-k="${k}" ${type?`data-t="${type}"`:''}`}
 function getp(o,p){return p.split('.').reduce((a,c)=>a==null?a:a[c],o)}
@@ -482,10 +493,23 @@ function lockUI(){const r=Store.role;const lk=isLocked();const bn=$('#lockbn');i
     if(r==='auditee'&&el.dataset.aud)return;if(r==='admin'&&lk&&(cur==='temuan'||/kunci|Kunci/.test(oc)))return;
     if(el.tagName==='SELECT'&&/cmp[AB]=|pilihAudit/.test(el.getAttribute('onchange')||''))return;if(el.id==='onlyChg'||el.type==='search')return;el.disabled=true})}
 const dlg=$('#dlg');
-const App={cfg(msg){$('#cfgUrl').value=Store.url();$('#cfgKey').value='';$('#cfgErr').textContent=msg||'';dlg.showModal();$('#cfgUrl').focus()},
- saveCfg(e){const u=$('#cfgUrl').value.trim(),k=$('#cfgKey').value;try{localStorage.setItem('smkp_url',u);if(u)sessionStorage.setItem('smkp_key',k);else sessionStorage.removeItem('smkp_key')}catch(x){}location.reload();return false},
+const App={
+ conns(){try{return JSON.parse(localStorage.getItem('smkp_conns')||'[]')}catch(e){return[]}},
+ setConns(l){try{localStorage.setItem('smkp_conns',JSON.stringify(l))}catch(e){}},
+ all(){const l=this.conns().map(x=>({...x,src:'lokal'})),seen=new Set(l.map(x=>x.url));(S._reg||[]).forEach(x=>{if(!seen.has(x.url))l.push({...x,src:'spreadsheet'})});const u=Store.url();if(u&&!seen.has(u)&&!l.find(x=>x.url===u))l.unshift({name:'Koneksi saat ini',url:u,src:'lokal'});return l},
+ cfg(msg){const l=this.all();$('#cfgSel').innerHTML='<option value="">+ Koneksi baru</option>'+l.map((x,i)=>`<option value="${i}" ${x.url===Store.url()?'selected':''}>${esc(x.name||'Tanpa nama')}${x.src==='spreadsheet'?' (dari spreadsheet)':''}</option>`).join('');
+  const cu=l.find(x=>x.url===Store.url());$('#cfgName').value=cu?cu.name:'';$('#cfgUrl').value=Store.url();$('#cfgKey').value='';$('#cfgErr').textContent=msg||'';
+  $('#regBox').classList.toggle('hide',Store.role!=='admin'||!Store.url());dlg.showModal();$('#cfgKey').focus()},
+ pick(i){const x=this.all()[i];$('#cfgName').value=x?x.name:'';$('#cfgUrl').value=x?x.url:'';$('#cfgKey').value='';$('#cfgKey').focus()},
+ saveCfg(e){const u=$('#cfgUrl').value.trim(),k=$('#cfgKey').value,n=$('#cfgName').value.trim()||'Koneksi '+(this.conns().length+1);
+  if(u&&!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(u)){$('#cfgErr').textContent='Alamat harus berbentuk https://script.google.com/macros/s/…/exec';return false}
+  if(u){const l=this.conns().filter(x=>x.url!==u);l.push({name:n,url:u});this.setConns(l)}
+  try{localStorage.setItem('smkp_url',u);if(u)sessionStorage.setItem('smkp_key',k);else sessionStorage.removeItem('smkp_key')}catch(x){}location.reload();return false},
+ del(){const u=$('#cfgUrl').value.trim();if(!u)return;if(!confirm('Hapus koneksi ini dari daftar di perangkat ini?'))return;this.setConns(this.conns().filter(x=>x.url!==u));if(Store.url()===u)try{localStorage.removeItem('smkp_url')}catch(e){}toast('Koneksi dihapus dari daftar');dlg.close();if(!Store.url())location.reload();else App.cfg()},
+ async saveReg(){try{const l=this.all().map(x=>({name:x.name,url:x.url}));await Store.set('connections',l);S._reg=l;toast('Daftar koneksi disimpan di spreadsheet')}catch(e){toast('Gagal menyimpan daftar: '+e.message)}},
+ link(){const u=Store.url()||$('#cfgUrl').value.trim();if(!u){$('#cfgErr').textContent='Isi alamat Web App dulu.';return}const l=location.origin+location.pathname+'#u='+encodeURIComponent(u);(navigator.clipboard?navigator.clipboard.writeText(l):Promise.reject()).then(()=>toast('Tautan akses disalin'),()=>{prompt('Salin tautan ini:',l)})},
  out(){try{sessionStorage.removeItem('smkp_key')}catch(e){}location.reload()}};
-new MutationObserver(()=>{const t=$('#sync').textContent,d=$('#sdot');d.className='dot '+(/GAGAL/i.test(t)?'err':/tersimpan|cloud/i.test(t)?'on':'wait')}).observe($('#sync'),{childList:true,characterData:true,subtree:true});
+new MutationObserver(()=>{const t=$('#sync').textContent,d=$('#sdot');d.className='dot '+(/GAGAL/i.test(t)?'err':/^tersimpan|cloud/i.test(t)?'on':'wait')}).observe($('#sync'),{childList:true,characterData:true,subtree:true});
 let idle;function bump(){clearTimeout(idle);if(Store.url())idle=setTimeout(()=>{try{sessionStorage.removeItem('smkp_key')}catch(e){}alert('Sesi berakhir karena 30 menit tidak aktif. Masuk lagi dengan kunci akses.');location.reload()},30*60*1000)}['click','keydown','input'].forEach(e=>document.addEventListener(e,bump));bump();
 if(Store.url()&&!Store.key()){$('#main').innerHTML='<div class="empty">Masukkan kunci akses untuk membuka data audit.</div>';App.cfg()}
 else load().then(()=>{$('#sync').textContent=Store.url()?'cloud':'mode lokal';render()}).catch(e=>{$('#main').innerHTML='<div class="card"><h2 class="err">Gagal memuat data</h2><p>'+esc(/auth|forbidden/.test(e.message)?'Kunci akses tidak dikenali.':e.message)+'</p><button class="btn" onclick="App.cfg()">Periksa koneksi</button></div>';if(/auth/.test(e.message))App.cfg('Kunci akses tidak dikenali. Periksa kembali.')});
