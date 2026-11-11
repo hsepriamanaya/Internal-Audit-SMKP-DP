@@ -173,7 +173,7 @@ const DEF={
  tindaklanjut:{},
  ofi:{items:[]},
  lap:{kantorPusat:'',alamat:'',izin:'',nomorIzin:'',komoditas:'',direktur:'',ktt:'',luas:'',pekerja:'',profilNarasi:'',latar1:'',latar2:'',periodeLaporan:'',kota:'',tglLaporan:'',tglRespon:'',respon1:'',respon2:'',respon3:'',operasional:[],produksi:[],peralatan:[],narasi:{I:'',II:'',III:'',IV:'',V:'',VI:'',VII:''},lampiranExtra:[],images:[]},
- plan:{batas:'',areas:[],manpower:[],params:{e:0.05,wwcFrac:10,obsCover:30,obsMin:3,periodeTR:'12 bulan terakhir',mode:'standar',on:{KS:0,FGD:0,UKUR:0},auditors:2,jam:6,unit:{TD:15,TR:20,WWC:6,OBS:8,KS:180,FGD:90,UKUR:20}},tgl:'',provinsi:'',jadwal:[],na:{},mo:{}}
+ plan:{batas:'',areas:[],manpower:[],params:{e:0.05,wwcFrac:10,obsCover:30,obsMin:3,periodeTR:'12 bulan terakhir',mode:'standar',on:{KS:0,FGD:0,UKUR:0},auditors:2,jam:6,unit:{TD:15,TR:20,WWC:6,OBS:8,KS:180,FGD:90,UKUR:20}},tgl:'',provinsi:'',jadwal:[],na:{},mo:{},oa:{}}
 };
 let S={};
 const KD=['Kebijakan','Perencanaan','Organisasi dan Personel','Implementasi','Pemantauan, Evaluasi, dan Tindak Lanjut','Dokumentasi','Tinjauan Manajemen dan Peningkatan Kinerja'];
@@ -185,7 +185,7 @@ async function load(){
   const ks=Object.keys(DEF).filter(k=>k!=='tindaklanjut'),keys=['index','connections',...ks.map(K),K('tl_auditi'),K('tl_verif')];
   const m=await Store.mget(keys);
   ks.forEach(k=>{S[k]=Object.assign(JSON.parse(JSON.stringify(DEF[k])),m[K(k)]||{})});
-  {const d=DEF.plan.params,pp=S.plan.params||{};S.plan.params=Object.assign({},d,pp,{on:Object.assign({},d.on,pp.on||{}),unit:Object.assign({},d.unit,pp.unit||{})});S.plan.mo=S.plan.mo||{};S.plan.jadwal=S.plan.jadwal||[];S.ba.nas=Object.assign({fr:0,sr:0,asr:0,mfr:0},S.ba.nas||{});if(!S.ba.faktor)S.ba.faktor=[0,0,0,0,0,0,0]}
+  {const d=DEF.plan.params,pp=S.plan.params||{};S.plan.params=Object.assign({},d,pp,{on:Object.assign({},d.on,pp.on||{}),unit:Object.assign({},d.unit,pp.unit||{})});S.plan.mo=S.plan.mo||{};S.plan.jadwal=S.plan.jadwal||[];S.plan.oa=S.plan.oa||{};S.ba.nas=Object.assign({fr:0,sr:0,asr:0,mfr:0},S.ba.nas||{});if(!S.ba.faktor)S.ba.faktor=[0,0,0,0,0,0,0]}
   const a=m[K('tl_auditi')]||{},v=m[K('tl_verif')]||{};S.tindaklanjut=a;for(const id in v)(S.tindaklanjut[id]=S.tindaklanjut[id]||{}).verif=v[id];
   S._reg=m['connections']||[];S._index=m['index']||[];if(!S._index.find(x=>x.id===Store.cur())){S._index.push({id:Store.cur(),label:'Audit '+Store.cur()});if(Store.role==='admin')await Store.set('index',S._index).catch(()=>{})}}
 const pend={};
@@ -311,26 +311,35 @@ function capHTML(sm,md){const p=S.plan.params,w=workload(sm),days=md?md.tahap2:0
   <p class="${over?'warn':'ok'}" style="margin:6px 0">${over?`Beban melebihi kapasitas ${(w.total-cap).toFixed(0)} jam. Coba mode Ringkas, matikan metode opsional, atau tambah auditor.`:`Beban muat dalam kapasitas; tersisa ${(cap-w.total).toFixed(0)} jam.`}</p>`:'<p class="warn">Isi jumlah pekerja di Berita Acara agar kapasitas waktu terhitung.</p>'}
   <p class="mu" style="font-size:12.5px">Menit per satuan adalah perkiraan awal; sesuaikan dengan pengalaman tim. Wawancara dan observasi dihitung per checkpoint, FGD per tiga checkpoint, dan kuesioner sebagai satu paket tetap.</p>`}
 function cpPills(it,i,c,sm,withText){return c.m.map(m=>{const on=mActive(it,i,c,m),pr=mPrio(c,m);
-  return `<span class="pill pk ${on?pr:'off'}" role="button" tabindex="0" title="${PL[pr]} – klik untuk ${on?'melewati':'mengambil'} metode ini" onclick="togMo('${it.id}',${i},'${m}')" onkeydown="if(event.key==='Enter')togMo('${it.id}',${i},'${m}')">${MN[m]}</span>${withText?` <span class="mu">${on?sampleText(m,sm):'tidak diambil ('+PL[pr]+')'}</span><br>`:''}`}).join('')}
-function sampleText(m,sm){
+  return `<span class="pill pk ${on?pr:'off'}" role="button" tabindex="0" title="${PL[pr]} – klik untuk ${on?'melewati':'mengambil'} metode ini" onclick="togMo('${it.id}',${i},'${m}')" onkeydown="if(event.key==='Enter')togMo('${it.id}',${i},'${m}')">${MN[m]}</span>${withText?` <span class="mu">${on?sampleText(m,sm,it):'tidak diambil ('+PL[pr]+')'}</span><br>`:''}`}).join('')}
+function obsAreasFor(it,sm){const o=S.plan.oa[it.id];return o?sm.allAreas.filter(a=>o.includes(a.nama)):sm.obsAreas}
+function togOA(id,ai,on){const sm=samples(),it=MASTER.find(x=>x.id===id),nm=sm.allAreas[ai].nama,cur=obsAreasFor(it,sm).map(a=>a.nama),nx=on?[...new Set([...cur,nm])]:cur.filter(x=>x!==nm),def=sm.obsAreas.map(a=>a.nama);
+  if(nx.length===def.length&&nx.every(x=>def.includes(x)))delete S.plan.oa[id];else S.plan.oa[id]=nx;save('plan');render()}
+function oaHTML(it,sm){if(!it.cp.some((c,i)=>c.m.includes('OBS')&&mActive(it,i,c,'OBS')))return '';const cur=obsAreasFor(it,sm).map(a=>a.nama);
+  return `<details style="margin:6px 0"><summary class="mu">Area observasi ${it.id}: ${cur.length} dari ${sm.allAreas.length}${S.plan.oa[it.id]?' (diubah manual)':''}</summary><div style="columns:2;font-size:13px;margin-top:4px">${sm.allAreas.map((a,ai)=>`<label style="display:flex;gap:6px;align-items:center;margin:2px 0;color:var(--ink)"><input type="checkbox" style="width:auto" ${cur.includes(a.nama)?'checked':''} onchange="togOA('${it.id}',${ai},this.checked)"> ${esc(a.nama)}${a.pelaksana&&a.pelaksana!=='IUP'?' ['+esc(a.pelaksana)+']':''}</label>`).join('')}</div>${S.plan.oa[it.id]?`<button class="btn s" onclick="delete S.plan.oa['${it.id}'];save('plan');render()">Kembalikan ke bawaan</button>`:''}</details>`}
+function sampleText(m,sm,it){
   switch(m){
    case 'TD':return 'Seluruh dokumen terkait (100%, tanpa sampling)';
    case 'TR':return 'Rekaman periode '+sm.p.periodeTR+' – seluruh bulan/semester, sebanyak mungkin';
    case 'WWC':return sm.wwc.length?`Stratified sampling pengawas: ${sm.wwc.map(x=>x.key+' ('+x.n+')').join('; ')} – total ${sm.nW} orang`:'<span class="warn">Isi manpower per level × departemen</span>';
    case 'KS':return sm.N?`Slovin e=${sm.p.e}: ${sm.ks} dari ${sm.N} pekerja, proporsional per departemen`:'<span class="warn">Isi jumlah pekerja</span>';
    case 'FGD':return 'Perwakilan tiap departemen/bagian (1 sesi)';
-   case 'OBS':return sm.obsAreas.length?`Purposive risk-based: ${sm.obsAreas.map(a=>a.nama+(a.pelaksana&&a.pelaksana!=='IUP'?' ['+a.pelaksana+']':'')).join('; ')} (${sm.obsAreas.length} dari ${sm.allAreas.length} area)`:'<span class="warn">Isi area lingkup audit</span>';
+   case 'OBS':{const ar=it?obsAreasFor(it,sm):sm.obsAreas;return ar.length?`Purposive risk-based: ${ar.map(a=>a.nama+(a.pelaksana&&a.pelaksana!=='IUP'?' ['+a.pelaksana+']':'')).join('; ')} (${ar.length} dari ${sm.allAreas.length} area)`:'<span class="warn">Isi area lingkup audit</span>'}
    case 'UKUR':return 'Verifikasi titik ukur pada area risiko tertinggi: '+(sm.obsAreas.slice(0,3).map(a=>a.nama).join('; ')||'-');}
   return ''}
 function hariKerja(n){const out=[];if(!S.plan.tgl)return out;const d=new Date(S.plan.tgl+'T00:00:00');const f=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');while(out.length<n){const g=d.getDay();if(g!==0&&g!==6)out.push(f(d));d.setDate(d.getDate()+1)}return out}
 function auditorNames(){const a=S.ba.tim2.filter(x=>x.nama).map(x=>x.nama);const n=Math.max(1,Number(S.plan.params.auditors)||1);while(a.length<n)a.push('Auditor '+(a.length+1));return a.slice(0,Math.max(n,S.ba.tim2.filter(x=>x.nama).length))}
-function obsIds(){return MASTER.filter(i=>!S.plan.na[i.id]&&i.cp.some((c,k)=>c.m.includes('OBS')&&mActive(i,k,c,'OBS'))).map(i=>i.id)}
+function idsCompact(ids){const set=new Set(ids),by={};ids.forEach(id=>{const it=MASTER.find(x=>x.id===id);(by[it.el]=by[it.el]||[]).push(id)});
+  const out=[];Object.keys(ELN).forEach(el=>{const got=by[el]||[];if(!got.length)return;const all=MASTER.filter(x=>x.el===el&&!S.plan.na[x.id]).map(x=>x.id);if(all.every(id=>set.has(id)))out.push(el);else out.push(...got)});return out.join('; ')}
+function metodeIds(ms){return MASTER.filter(i=>!S.plan.na[i.id]&&i.cp.some((c,k)=>c.m.some(m=>ms.includes(m)&&mActive(i,k,c,m)))).map(i=>i.id)}
 function genJadwal(){const md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.kelas,faktorPct());
   if(!md){toast('Isi jumlah pekerja di Berita Acara dulu');return}if(!S.plan.tgl){toast('Isi tanggal mulai Tahap II dulu');return}
-  const sm=samples(),au=auditorNames(),T=md.tahap2,ids=obsIds().join('; ');
-  const depts=[...new Set(S.plan.manpower.map(x=>(x.dept||'').trim()).filter(Boolean))],
-   q=[...(depts.length?depts:['seluruh departemen']).map(d=>'Office – '+d+'\nTinjauan Dokumen dan Rekaman\nElemen : sesuai tabel Metode dan Sampel'),
-       ...sm.obsAreas.map(a=>(a.grup?a.grup+' ':'Area ')+'('+a.nama+(a.pelaksana&&a.pelaksana!=='IUP'?' – '+a.pelaksana:'')+')\nObservasi\nElemen : '+ids)];
+  const sm=samples(),au=auditorNames(),T=md.tahap2,tdIds=metodeIds(['TD','TR']),wwIds=metodeIds(['WWC']);
+  const stratDept=new Set(S.plan.manpower.filter(x=>x.level!=='Pekerja'&&x.jumlah>0).map(x=>(x.dept||'').trim()));
+  const depts=[...new Set(S.plan.manpower.map(x=>(x.dept||'').trim()).filter(Boolean))],byArea={};
+  MASTER.filter(i=>!S.plan.na[i.id]&&i.cp.some((c,k)=>c.m.includes('OBS')&&mActive(i,k,c,'OBS'))).forEach(it=>obsAreasFor(it,sm).forEach(a=>(byArea[a.nama]=byArea[a.nama]||[]).push(it.id)));
+  const q=[...(depts.length?depts:['seluruh departemen']).map(d=>'Office – '+d+(tdIds.length?'\nTinjauan Dokumen dan Rekaman\nElemen : '+idsCompact(tdIds):'')+(wwIds.length&&(stratDept.has(d)||!depts.length)?'\nWawancara\nElemen : '+idsCompact(wwIds):'')),
+    ...sm.allAreas.filter(a=>byArea[a.nama]).map(a=>(a.grup?a.grup+' ':'Area ')+'('+a.nama+(a.pelaksana&&a.pelaksana!=='IUP'?' – '+a.pelaksana:'')+')\nObservasi\nElemen : '+idsCompact(byArea[a.nama]))];
   const rows=[];let n=0;
   for(let h=1;h<T;h++){for(const sl of [['P',h===1?'09.00 s.d 12.00':'08.00 s.d 12.00'],['S','13.00 s.d 16.00']])for(const a of au){if(n<q.length)rows.push({h,s:sl[0],w:sl[1],k:q[n++],a})}}
   const L=Math.max(1,...rows.map(r=>r.h))+1;rows.push({h:L,s:'P',w:'08.00 s.d 12.00',k:'Penyusunan temuan dan kesimpulan audit',a:'Seluruh Anggota Tim'},{h:L,s:'S',w:'13.00 s.d 15.00',k:'Pelaksanaan Rapat Penutupan',a:'Seluruh Anggota Tim'});
@@ -349,7 +358,7 @@ function raData(){const b=S.ba,pl=S.plan,sm=samples(),md=SMKP.mandays(MANDAY,Num
   const hari=[];for(let h=1;h<=T;h++){const r=pl.jadwal.filter(x=>Number(x.h)===h);if(!r.length)continue;hari.push({label:'Hari '+(['Pertama','Kedua','Ketiga','Keempat','Kelima','Keenam','Ketujuh','Kedelapan','Kesembilan','Kesepuluh','Kesebelas','Kedua belas','Ketiga belas','Keempat belas','Kelima belas','Keenam belas','Ketujuh belas','Kedelapan belas','Kesembilan belas','Kedua puluh'][h-1]||'ke-'+h)+(tglH(h)?' ('+tglH(h)+')':''),h,first:h===1,last:h===T,pagi:r.filter(x=>x.s==='P'),siang:r.filter(x=>x.s!=='P')})}
   const ar=['Lead Auditor','Auditor'];const tim=b.tim2.filter(x=>x.nama);
   const items=MASTER.map(it=>({el:it.el,id:it.id,name:it.name,na:!!pl.na[it.id],m:pl.na[it.id]?[]:['TD','TR','WWC','KS','FGD','OBS','UKUR'].map(m=>{const cps=it.cp.map((c,i)=>({c,i})).filter(x=>x.c.m.includes(m)&&mActive(it,x.i,x.c,m));
-     if(!cps.length)return null;const sampel=(m==='TD'||m==='TR')?[plain(sampleText(m,sm)),...cps.map(x=>'- '+cl(x.c.t))]:[plain(sampleText(m,sm))];return {m:MN[m],sampel}}).filter(Boolean)}));
+     if(!cps.length)return null;const sampel=(m==='TD'||m==='TR')?[plain(sampleText(m,sm,it)),...cps.map(x=>'- '+cl(x.c.t))]:[plain(sampleText(m,sm,it))];return {m:MN[m],sampel}}).filter(Boolean)}));
   return {co,b,izin:b.izin,periode:b.periode||'',tujuan:[`Penentuan tingkat kesesuaian SMKP ${co} atau bagiannya, dengan kriteria audit.`,`Evaluasi kemampuan SMKP untuk menjamin pemenuhan persyaratan peraturan perundang-undangan pada ${co}.`,`Evaluasi keefektifan SMKP dalam memenuhi tujuan yang ditetapkan pada ${co}.`,`Identifikasi penerapan SMKP yang potensial untuk ditingkatkan pada ${co}.`],
    lingkup:Object.keys(grp).map(g=>({g,a:grp[g]})),pengecualian:MASTER.filter(i=>pl.na[i.id]).map(i=>i.id+' '+i.name),
    tim:tim.map(x=>[/Ketua/.test(x.jabatan)?'Lead Auditor':x.jabatan,x.nama]),
@@ -367,7 +376,7 @@ function tabPlan(){
   ${jadwalHTML()}
   <div class="card"><h2>Metode &amp; sampel per kriteria</h2><p class="mu">Diturunkan dari kriteria nilai tertinggi setiap sub-elemen. Centang N/A bila tidak berlaku (masuk Pengecualian).</p>
   <table><tr><th style="width:55px">ID</th><th>Sub-elemen / checkpoint</th><th style="width:70px">N/A</th></tr>
-  ${MASTER.map(it=>{const na=pl.na[it.id];return `<tr><td><b>${it.id}</b></td><td><b>${esc(it.name)}</b> <span class="mu">(maks ${it.max})</span><details ${na?'':'open'}><summary class="mu">${it.cp.length} checkpoint</summary>${it.cp.map((c,i)=>`<div style="margin:5px 0;padding-left:8px;border-left:3px solid var(--line)">${i+1}. ${esc(cl(c.t))}<br>${cpPills(it,i,c,sm,true)}</div>`).join('')}</details></td><td>${it.na?`<input type="checkbox" style="width:auto" ${na?'checked':''} onchange="S.plan.na['${it.id}']=this.checked?1:0;save('plan')">`:'<span class="mu">–</span>'}</td></tr>`}).join('')}</table></div>`}
+  ${MASTER.map(it=>{const na=pl.na[it.id];return `<tr><td><b>${it.id}</b></td><td><b>${esc(it.name)}</b> <span class="mu">(maks ${it.max})</span><details ${na?'':'open'}><summary class="mu">${it.cp.length} checkpoint</summary>${it.cp.map((c,i)=>`<div style="margin:5px 0;padding-left:8px;border-left:3px solid var(--line)">${i+1}. ${esc(cl(c.t))}<br>${cpPills(it,i,c,sm,true)}</div>`).join('')}${oaHTML(it,sm)}</details></td><td>${it.na?`<input type="checkbox" style="width:auto" ${na?'checked':''} onchange="S.plan.na['${it.id}']=this.checked?1:0;save('plan')">`:'<span class="mu">–</span>'}</td></tr>`}).join('')}</table></div>`}
 
 
 // ---------- Penilaian ----------
