@@ -299,16 +299,16 @@ function workload(sm){const u=S.plan.params.unit,cnt={TD:0,TR:0,WWC:0,OBS:0,KS:0
   MASTER.filter(i=>!S.plan.na[i.id]).forEach(it=>it.cp.forEach((c,i)=>c.m.forEach(m=>{if(mActive(it,i,c,m))cnt[m]++})));
   const min={TD:cnt.TD*u.TD,TR:cnt.TR*u.TR,WWC:cnt.WWC*u.WWC,OBS:cnt.OBS?cnt.OBS*u.OBS+sm.obsAreas.length*30:0,KS:cnt.KS?u.KS:0,FGD:Math.ceil(cnt.FGD/3)*u.FGD,UKUR:cnt.UKUR*u.UKUR};
   return {cnt,min,total:Object.values(min).reduce((a,b)=>a+b,0)/60}}
-function capHTML(sm,md){const p=S.plan.params,w=workload(sm),days=md?md.tahap2:0,cap=p.auditors*days*p.jam,over=cap&&w.total>cap,pc=cap?Math.min(100,w.total/cap*100):0;
+function capHTML(sm,md){const p=S.plan.params,w=workload(sm),days=md?md.tahap2:0,cap=days*p.jam,over=cap&&w.total>cap,pc=cap?Math.min(100,w.total/cap*100):0;
   const lab={TD:'Tinjauan dokumen',TR:'Tinjauan rekaman',WWC:'Wawancara',OBS:'Observasi',KS:'Kuesioner',FGD:'FGD',UKUR:'Pengukuran'};
   return `<h3>Prioritas metode dan beban kerja</h3>
   <p class="mu" style="margin-top:0">Atur metode yang diambil sesuai waktu dan jumlah auditor. Tinjauan dokumen dan rekaman selalu wajib. Klik label metode pada tabel di bawah untuk mengaktifkan atau melewati metode pada satu checkpoint.</p>
   <div class="g2"><div><label>Mode pengambilan sampel</label><select ${bind('params.mode','plan')} data-re="1"><option value="lengkap" ${p.mode==='lengkap'?'selected':''}>Lengkap – semua metode</option><option value="standar" ${p.mode==='standar'?'selected':''}>Standar – wajib dan disarankan</option><option value="ringkas" ${p.mode==='ringkas'?'selected':''}>Ringkas – hanya yang wajib</option></select></div>
   <div><label>Metode opsional (berlaku di mode Standar)</label><div class="row" style="margin:6px 0">${['KS','FGD','UKUR'].map(m=>`<label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--ink)"><input type="checkbox" ${p.on[m]?'checked':''} ${bind('params.on.'+m,'plan')} data-re="1"> ${lab[m]}</label>`).join('')}</div></div>
-  ${F('Jumlah auditor','plan','params.auditors','n','data-re="1" min="1"')}${F('Jam efektif per hari','plan','params.jam','n','data-re="1" min="1" max="12"')}</div>
+  ${F('Jumlah auditor (dipakai bila Tim Tahap II belum diisi)','plan','params.auditors','n','data-re="1" min="1"')}${F('Jam efektif per hari','plan','params.jam','n','data-re="1" min="1" max="12"')}</div>
   <table><tr><th>Metode</th><th>Checkpoint aktif</th><th>Menit per satuan</th><th>Perkiraan jam</th></tr>${Object.keys(lab).map(m=>`<tr><td>${lab[m]}</td><td>${w.cnt[m]}</td><td><input type="number" style="width:90px" step="any" ${bind('params.unit.'+m,'plan','n')} data-re="c" value="${p.unit[m]}"></td><td>${(w.min[m]/60).toFixed(1)}</td></tr>`).join('')}<tr><th colspan="3">Total beban</th><th>${w.total.toFixed(1)} jam</th></tr></table>
-  ${md?`<div class="row" style="margin-bottom:2px"><span>Kapasitas Tahap II: <b>${cap.toFixed(0)} jam</b> (${p.auditors} auditor × ${days} hari × ${p.jam} jam)</span></div><div class="meter ${over?'over':''}"><i style="width:${pc}%"></i></div>
-  <p class="${over?'warn':'ok'}" style="margin:6px 0">${over?`Beban melebihi kapasitas ${(w.total-cap).toFixed(0)} jam. Coba mode Ringkas, matikan metode opsional, atau tambah auditor.`:`Beban muat dalam kapasitas; tersisa ${(cap-w.total).toFixed(0)} jam.`}</p>`:'<p class="warn">Isi jumlah pekerja di Berita Acara agar kapasitas waktu terhitung.</p>'}
+  ${md?`<div class="row" style="margin-bottom:2px"><span>Kapasitas Tahap II: <b>${cap.toFixed(0)} jam</b> (${days} mandays × ${p.jam} jam). Dengan ${nAud()} auditor, pelaksanaannya ±<b>${calDays(md)} hari kalender</b>.</span></div><div class="meter ${over?'over':''}"><i style="width:${pc}%"></i></div>
+  <p class="${over?'warn':'ok'}" style="margin:6px 0">${over?`Beban melebihi kapasitas ${(w.total-cap).toFixed(0)} jam. Coba mode Ringkas, matikan metode opsional, atau tambah mandays (hari audit).`:`Beban muat dalam kapasitas; tersisa ${(cap-w.total).toFixed(0)} jam.`}</p>`:'<p class="warn">Isi jumlah pekerja di Berita Acara agar kapasitas waktu terhitung.</p>'}
   <p class="mu" style="font-size:12.5px">Menit per satuan adalah perkiraan awal; sesuaikan dengan pengalaman tim. Wawancara dan observasi dihitung per checkpoint, FGD per tiga checkpoint, dan kuesioner sebagai satu paket tetap.</p>`}
 function cpPills(it,i,c,sm,withText){return c.m.map(m=>{const on=mActive(it,i,c,m),pr=mPrio(c,m);
   return `<span class="pill pk ${on?pr:'off'}" role="button" tabindex="0" title="${PL[pr]} – klik untuk ${on?'melewati':'mengambil'} metode ini" onclick="togMo('${it.id}',${i},'${m}')" onkeydown="if(event.key==='Enter')togMo('${it.id}',${i},'${m}')">${MN[m]}</span>${withText?` <span class="mu">${on?sampleText(m,sm,it):'tidak diambil ('+PL[pr]+')'}</span><br>`:''}`}).join('')}
@@ -328,13 +328,15 @@ function sampleText(m,sm,it){
    case 'UKUR':return 'Verifikasi titik ukur pada area risiko tertinggi: '+(sm.obsAreas.slice(0,3).map(a=>a.nama).join('; ')||'-');}
   return ''}
 function hariKerja(n){const out=[];if(!S.plan.tgl)return out;const d=new Date(S.plan.tgl+'T00:00:00');const f=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');while(out.length<n){const g=d.getDay();if(g!==0&&g!==6)out.push(f(d));d.setDate(d.getDate()+1)}return out}
-function auditorNames(){const a=S.ba.tim2.filter(x=>x.nama).map(x=>x.nama);const n=Math.max(1,Number(S.plan.params.auditors)||1);while(a.length<n)a.push('Auditor '+(a.length+1));return a.slice(0,Math.max(n,S.ba.tim2.filter(x=>x.nama).length))}
+function nAud(){const n=S.ba.tim2.filter(x=>x.nama).length;return n||Math.max(1,Number(S.plan.params.auditors)||1)}
+function calDays(md){return md?Math.ceil(md.tahap2/nAud()):0}
+function auditorNames(){const a=S.ba.tim2.filter(x=>x.nama).map(x=>x.nama),n=nAud();while(a.length<n)a.push('Auditor '+(a.length+1));return a}
 function idsCompact(ids){const set=new Set(ids),by={};ids.forEach(id=>{const it=MASTER.find(x=>x.id===id);(by[it.el]=by[it.el]||[]).push(id)});
   const out=[];Object.keys(ELN).forEach(el=>{const got=by[el]||[];if(!got.length)return;const all=MASTER.filter(x=>x.el===el&&!S.plan.na[x.id]).map(x=>x.id);if(all.every(id=>set.has(id)))out.push(el);else out.push(...got)});return out.join('; ')}
 function metodeIds(ms){return MASTER.filter(i=>!S.plan.na[i.id]&&i.cp.some((c,k)=>c.m.some(m=>ms.includes(m)&&mActive(i,k,c,m)))).map(i=>i.id)}
 function genJadwal(){const md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.kelas,faktorPct());
   if(!md){toast('Isi jumlah pekerja di Berita Acara dulu');return}if(!S.plan.tgl){toast('Isi tanggal mulai Tahap II dulu');return}
-  const sm=samples(),au=auditorNames(),T=md.tahap2,tdIds=metodeIds(['TD','TR']),wwIds=metodeIds(['WWC']);
+  const sm=samples(),au=auditorNames(),T=calDays(md),tdIds=metodeIds(['TD','TR']),wwIds=metodeIds(['WWC']);
   const stratDept=new Set(S.plan.manpower.filter(x=>x.level!=='Pekerja'&&x.jumlah>0).map(x=>(x.dept||'').trim()));
   const depts=[...new Set(S.plan.manpower.map(x=>(x.dept||'').trim()).filter(Boolean))],byArea={};
   MASTER.filter(i=>!S.plan.na[i.id]&&i.cp.some((c,k)=>c.m.includes('OBS')&&mActive(i,k,c,'OBS'))).forEach(it=>obsAreasFor(it,sm).forEach(a=>(byArea[a.nama]=byArea[a.nama]||[]).push(it.id)));
@@ -343,16 +345,16 @@ function genJadwal(){const md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.k
   const rows=[];let n=0;
   for(let h=1;h<T;h++){for(const sl of [['P',h===1?'09.00 s.d 12.00':'08.00 s.d 12.00'],['S','13.00 s.d 16.00']])for(const a of au){if(n<q.length)rows.push({h,s:sl[0],w:sl[1],k:q[n++],a})}}
   const L=Math.max(1,...rows.map(r=>r.h))+1;rows.push({h:L,s:'P',w:'08.00 s.d 12.00',k:'Penyusunan temuan dan kesimpulan audit',a:'Seluruh Anggota Tim'},{h:L,s:'S',w:'13.00 s.d 15.00',k:'Pelaksanaan Rapat Penutupan',a:'Seluruh Anggota Tim'});
-  S.plan.jadwal=rows;save('plan');render();toast(n<q.length?(q.length-n)+' kegiatan tidak muat dalam '+(T-1)+' hari kerja lapangan; tambah auditor atau hari.':'Susunan kegiatan dibuat: '+L+' hari terpakai dari '+T+' hari alokasi Tahap II')}
+  S.plan.jadwal=rows;save('plan');render();toast(n<q.length?(q.length-n)+' kegiatan tidak muat dalam '+(T-1)+' hari kerja lapangan; tambah auditor atau hari.':'Susunan kegiatan dibuat: '+L+' hari terpakai dari '+T+' hari kalender (mandays Tahap II ÷ auditor)')}
 function jadwalHTML(){const pl=S.plan,md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.kelas,faktorPct());
   return `<div class="card"><h2>Susunan kegiatan pelaksanaan audit</h2><p class="mu">Isi tanggal mulai Tahap II lalu susun otomatis: departemen untuk tinjauan dokumen dan area berisiko tertinggi untuk observasi dibagi ke auditor per sesi. Hasilnya bisa diubah baris demi baris.</p>
   <div class="g2">${F('Tanggal mulai Tahap II','plan','tgl','d','data-re="1"')}${F('Provinsi (untuk distribusi laporan)','plan','provinsi')}</div>
-  <div class="row"><button class="btn" onclick="genJadwal()">${pl.jadwal.length?'Susun ulang otomatis':'Susun otomatis'}</button>${md?`<span class="mu">${md.tahap2} hari Tahap II, ${auditorNames().length} auditor</span>`:''}</div>
+  <div class="row"><button class="btn" onclick="genJadwal()">${pl.jadwal.length?'Susun ulang otomatis':'Susun otomatis'}</button>${md?`<span class="mu">${md.tahap2} mandays Tahap II ÷ ${nAud()} auditor = ${calDays(md)} hari kalender</span>`:''}</div>
   ${pl.jadwal.length?listTable('plan','jadwal',[{h:'Hari ke',f:'h',t:'n'},{h:'Sesi',f:'s',sel:['P','S']},{h:'Waktu',f:'w'},{h:'Kegiatan',f:'k'},{h:'Auditor',f:'a'}],'Kegiatan',{h:1,s:'P',w:'08.00 s.d 12.00',k:'',a:''}):''}
   <div class="row" style="margin-top:12px"><button class="btn" onclick="exportRA()">Unduh Rencana Audit (Word)</button></div></div>`}
 function plain(h){return String(h).replace(/<[^>]+>/g,'')}
 function raData(){const b=S.ba,pl=S.plan,sm=samples(),md=SMKP.mandays(MANDAY,Number(b.pekerja)||0,b.kelas,faktorPct()),co=b.auditi||'………';
-  const days=md?hariKerja(md.tahap2):[],tglH=h=>days[h-1]?hariNama(days[h-1]):'';
+  const days=md?hariKerja(calDays(md)):[],tglH=h=>days[h-1]?hariNama(days[h-1]):'';
   const grp={};pl.areas.filter(a=>a.nama).forEach(a=>{(grp[a.grup||'Area']=grp[a.grup||'Area']||[]).push(a.nama+(a.pelaksana&&a.pelaksana!=='IUP'?' '+a.pelaksana:''))});
   const T=Math.max(0,...pl.jadwal.map(r=>Number(r.h)||0));
   const hari=[];for(let h=1;h<=T;h++){const r=pl.jadwal.filter(x=>Number(x.h)===h);if(!r.length)continue;hari.push({label:'Hari '+(['Pertama','Kedua','Ketiga','Keempat','Kelima','Keenam','Ketujuh','Kedelapan','Kesembilan','Kesepuluh','Kesebelas','Kedua belas','Ketiga belas','Keempat belas','Kelima belas','Keenam belas','Ketujuh belas','Kedelapan belas','Kesembilan belas','Kedua puluh'][h-1]||'ke-'+h)+(tglH(h)?' ('+tglH(h)+')':''),h,first:h===1,last:h===T,pagi:r.filter(x=>x.s==='P'),siang:r.filter(x=>x.s!=='P')})}
