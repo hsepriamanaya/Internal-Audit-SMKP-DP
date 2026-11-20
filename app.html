@@ -589,14 +589,15 @@ function setKet(id,v){NV(id).ketPos=v;save('nilai')}
 function snapshot(){const nm=nilaiMap(),items=MASTER.map(i=>({id:i.id,element:i.el,max:Number(i.max),nilai:nm[i.id]})),r=SMKP.skor(items),T=temuan();
   const el={};Object.keys(ELN).forEach(e=>{const x=r.el[e]||{sum:0,max:0,pct:0};el[e]={sum:x.sum,max:x.max,pct:x.pct}});
   const kt={};MASTER.forEach(i=>{const k=kat(i);if(k)kt[i.id]=k});
-  return {id:Store.cur(),label:S.ba.periode||('Audit '+Store.cur()),auditi:S.ba.auditi,total:r.total,el,nilai:nm,kat:kt,nc:T.map(x=>({id:x.it.id,no:x.no,k:x.k})),tgl:new Date().toISOString().slice(0,10)}}
+  return {id:Store.cur(),label:((S._index||[]).find(x=>x.id===Store.cur())||{}).label||('Audit '+Store.cur()),auditi:S.ba.auditi,total:r.total,el,nilai:nm,kat:kt,nc:T.map(x=>({id:x.it.id,no:x.no,k:x.k})),tgl:new Date().toISOString().slice(0,10)}}
 async function arsipkan(){if(!confirm('Simpan snapshot nilai audit ini sebagai arsip untuk perbandingan?'))return;
-  try{const sn=snapshot();await Store.set('snap/'+sn.id,sn);const ix=S._index.find(x=>x.id===sn.id);ix.label=sn.label;ix.total=sn.total;ix.tgl=sn.tgl;await Store.set('index',S._index);toast('Snapshot tersimpan');render()}catch(e){toast('Gagal: '+e.message)}}
+  try{const sn=snapshot();await Store.set('snap/'+sn.id,sn);const ix=S._index.find(x=>x.id===sn.id);ix.total=sn.total;ix.tgl=sn.tgl;await Store.set('index',S._index);toast('Snapshot tersimpan');render()}catch(e){toast('Gagal: '+e.message)}}
 async function kunciAudit(){if(!confirm('Kunci audit ini? Nilai, rencana, dan laporan tidak bisa diubah lagi (hanya tindak lanjut). Snapshot arsip dibuat otomatis.'))return;
-  try{const sn=snapshot();await Store.set('snap/'+sn.id,sn);const ix=S._index.find(x=>x.id===sn.id);Object.assign(ix,{label:sn.label,total:sn.total,tgl:sn.tgl,locked:1});await Store.set('index',S._index);toast('Audit dikunci');render()}catch(e){toast('Gagal: '+e.message)}}
+  try{const sn=snapshot();await Store.set('snap/'+sn.id,sn);const ix=S._index.find(x=>x.id===sn.id);Object.assign(ix,{total:sn.total,tgl:sn.tgl,locked:1});await Store.set('index',S._index);toast('Audit dikunci');render()}catch(e){toast('Gagal: '+e.message)}}
 async function bukaKunci(){if(!confirm('Buka kunci audit ini?'))return;try{const ix=S._index.find(x=>x.id===Store.cur());delete ix.locked;await Store.set('index',S._index);toast('Kunci dibuka');render()}catch(e){toast('Gagal: '+e.message)}}
-async function auditBaru(){const id='a'+Date.now().toString(36);const lbl=prompt('Nama/periode audit baru (mis. Audit 2026):');if(!lbl)return;
+async function auditBaru(){const id='a'+Date.now().toString(36);const lbl=prompt('Nama audit baru (mis. PT Priamanaya Energi – 2026):');if(!lbl)return;
   try{S._index.push({id,label:lbl});await Store.set('index',S._index);localStorage.setItem('smkp_cur',id);location.reload()}catch(e){toast('Gagal: '+e.message)}}
+async function ubahNamaAudit(){const ix=S._index.find(x=>x.id===Store.cur());const n=prompt('Nama audit (tampil di daftar audit; tidak mengubah Periode audit di Berita Acara):',ix.label);if(!n||!n.trim())return;ix.label=n.trim();try{await Store.set('index',S._index);toast('Nama audit diubah');render()}catch(e){toast('Gagal: '+e.message)}}
 function pilihAudit(id){localStorage.setItem('smkp_cur',id);location.reload()}
 let cmpA='',cmpB='live';
 async function getSnap(id){return id==='live'?snapshot():await Store.get('snap/'+id)}
@@ -617,7 +618,7 @@ async function tabCmp(){
    <table><tr><th>ID</th><th>Sub-elemen</th><th>Maks</th><th>${esc(A.label)}</th><th>${esc(B.label)}</th><th>Δ</th><th>Status</th></tr>${rows.filter(x=>!(window.__only)||x.s!=='Tetap').map(x=>`<tr><td>${x.i.id}</td><td>${esc(x.i.name)}</td><td>${x.i.max}</td><td>${x.a==null?'-':x.a}</td><td>${x.b==null?'-':x.b}</td><td class="${col(x.d)}">${x.d==null?'':(x.d>0?'+':'')+x.d}</td><td>${x.s}</td></tr>`).join('')}</table>`;
    window.__cmpRows=rows.map(x=>[x.i.id,x.i.name,x.i.max,x.a,x.b,x.d,x.s]);window.__cmpHead=[A.label,B.label]}}
   return `<div class="card"><h2>Audit &amp; arsip</h2><div class="row"><div style="min-width:240px"><label>Audit aktif</label><select onchange="pilihAudit(this.value)">${ix.map(x=>`<option value="${x.id}" ${x.id===Store.cur()?'selected':''}>${esc(x.label)}</option>`).join('')}</select></div>
-  ${Store.role==='admin'?(isLocked()?'<button class="btn s" onclick="bukaKunci()">Buka kunci audit</button>':'<button class="btn" onclick="kunciAudit()">Kunci audit (final &amp; arsipkan)</button>')+'<button class="btn s" onclick="arsipkan()">Arsipkan snapshot audit ini</button><button class="btn s" onclick="auditBaru()">+ Audit baru</button>':''}</div></div>
+  ${Store.role==='admin'?(isLocked()?'<button class="btn s" onclick="bukaKunci()">Buka kunci audit</button>':'<button class="btn" onclick="kunciAudit()">Kunci audit (final &amp; arsipkan)</button>')+'<button class="btn s" onclick="arsipkan()">Arsipkan snapshot audit ini</button><button class="btn s" onclick="ubahNamaAudit()">Ubah nama audit</button><button class="btn s" onclick="auditBaru()">+ Audit baru</button>':''}</div></div>
   <div class="card"><h2>Perbandingan per sub-elemen</h2><div class="row"><div><label>Pembanding (periode sebelumnya)</label><select onchange="cmpA=this.value;render()">${opts(cmpA)}</select></div><div><label>Periode ini</label><select onchange="cmpB=this.value;render()">${opts(cmpB)}</select></div></div>${body}</div>`}
 function cmpCsv(){const h=['ID','Sub-elemen','Maks',window.__cmpHead[0],window.__cmpHead[1],'Selisih','Status'];const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   dl(new Blob(['﻿'+[h].concat(window.__cmpRows).map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}),'Perbandingan Audit.csv')}
@@ -641,7 +642,7 @@ async function render(){const y=window.scrollY;const a=document.activeElement,id
   $('#nav').innerHTML=tabs.map(t=>{const n=NUMBERED.indexOf(t[0]),inf=si[t[0]];
     return (t[0]==='cmp'?'<hr>':'')+`<li><button class="${t[0]==cur?'on':''}" onclick="go('${t[0]}')" ${t[0]==cur?'aria-current="page"':''}><span class="n ${inf&&inf.done?'done':''}">${n>=0?(inf&&inf.done?'✓':n+1):'•'}</span><span class="t">${t[1]}</span><span class="p">${inf?inf.p:''}</span></button></li>`}).join('');
   $('#ttl').textContent=tb[3];$('#sub').textContent=tb[4];document.title=tb[3]+' · Audit SMKP';
-  const ix=S._index||[];$('#auditSel').innerHTML=ix.map(x=>`<option value="${x.id}" ${x.id===Store.cur()?'selected':''}>${esc(x.id===Store.cur()&&S.ba&&S.ba.periode?S.ba.periode:x.label)}${x.locked?' (final)':''}</option>`).join('');
+  const ix=S._index||[];$('#auditSel').innerHTML=ix.map(x=>`<option value="${x.id}" ${x.id===Store.cur()?'selected':''}>${esc(x.label)}${x.locked?' (final)':''}</option>`).join('');
   $('#who').textContent={admin:'Auditor',reader:'Pembaca',auditee:'Auditi'}[Store.role]||'';$('#btnOut').classList.toggle('hide',!Store.url());
   let html;try{html=await tb[2]()}catch(e){html='<div class="card err">'+esc(e.message)+'</div>'}
   $('#main').innerHTML=html;window.scrollTo({top:y,behavior:'instant'});lockUI();
