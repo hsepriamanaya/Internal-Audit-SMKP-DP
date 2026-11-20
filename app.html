@@ -165,7 +165,7 @@ function toast(t){const m=$('#msg');m.textContent=t;m.style.display='block';clea
 const DEF={
  ba:{auditi:'',izin:'IUP',komoditas:'',alamat:'',periode:'',
   kinerja:{'Kecelakaan cedera ringan':0,'Kecelakaan cedera berat':0,'Kecelakaan mati':0,'Frequency rate':0,'Severity rate':0,'Kejadian berbahaya':0,'Absence severity rate':0,'Morbidity frequency rate':0,'Kejadian akibat penyakit tenaga kerja':0,'Frekuensi penyakit akibat kerja':0},
-  faktor:[0,0,0,0,0,0,0],nas:{fr:0,sr:0,asr:0,mfr:0},roster:[],sertifikasi:0,pekerja:0,kelas:'tinggi',
+  faktor:[0,0,0,0,0,0,0],nas:{fr:0,sr:0,asr:0,mfr:0},batasLapor:'2027-01-15',roster:[],sertifikasi:0,pekerja:0,kelas:'tinggi',
   tim1:[{nama:'',jabatan:'Ketua Tim Auditor',reg:''}],tim2:[{nama:'',jabatan:'Ketua Tim Auditor',reg:''}],skTim:'',skTgl:'',
   kontak:{tgl:'',media:'Pertemuan',wakil:'',jabatan:''},
   tglKelayakan:'',kelayakan:[1,1,1,1,1,1,1],kecukupan:[1,1,1,1,1,1,1],
@@ -175,7 +175,7 @@ const DEF={
  tindaklanjut:{},
  ofi:{items:[]},
  lap:{kantorPusat:'',alamat:'',izin:'',nomorIzin:'',komoditas:'',direktur:'',ktt:'',luas:'',pekerja:'',profilNarasi:'',latar1:'',latar2:'',periodeLaporan:'',kota:'',tglLaporan:'',tglRespon:'',respon1:'',respon2:'',respon3:'',operasional:[],produksi:[],peralatan:[],narasi:{I:'',II:'',III:'',IV:'',V:'',VI:'',VII:''},lampiranExtra:[],images:[]},
- plan:{batas:'',areas:[],manpower:[],params:{e:0.05,wwcFrac:10,obsCover:30,obsMin:3,periodeTR:'12 bulan terakhir',mode:'standar',fill:1,on:{KS:0,FGD:0,UKUR:0},auditors:2,jam:6,unit:{TD:15,TR:20,WWC:6,OBS:8,KS:180,FGD:90,UKUR:20}},tgl:'',provinsi:'',jadwal:[],na:{},mo:{},oa:{},lib:{}}
+ plan:{batas:'',obj:{5:0},areas:[],manpower:[],params:{e:0.05,wwcFrac:10,obsCover:30,obsMin:3,periodeTR:'12 bulan terakhir',mode:'standar',fill:1,on:{KS:0,FGD:0,UKUR:0},auditors:2,jam:6,unit:{TD:15,TR:20,WWC:6,OBS:8,KS:180,FGD:90,UKUR:20}},tgl:'',provinsi:'',jadwal:[],na:{},mo:{},oa:{},lib:{}}
 };
 let S={};
 const KD=['Kebijakan','Perencanaan','Organisasi dan Personel','Implementasi','Pemantauan, Evaluasi, dan Tindak Lanjut','Dokumentasi','Tinjauan Manajemen dan Peningkatan Kinerja'];
@@ -187,7 +187,7 @@ async function load(){
   const ks=Object.keys(DEF).filter(k=>k!=='tindaklanjut'),keys=['index','connections',...ks.map(K),K('tl_auditi'),K('tl_verif')];
   const m=await Store.mget(keys);
   ks.forEach(k=>{S[k]=Object.assign(JSON.parse(JSON.stringify(DEF[k])),m[K(k)]||{})});
-  {const d=DEF.plan.params,pp=S.plan.params||{};S.plan.params=Object.assign({},d,pp,{on:Object.assign({},d.on,pp.on||{}),unit:Object.assign({},d.unit,pp.unit||{})});S.plan.mo=S.plan.mo||{};S.plan.jadwal=S.plan.jadwal||[];S.plan.oa=S.plan.oa||{};S.plan.lib=S.plan.lib||{};S.ba.nas=Object.assign({fr:0,sr:0,asr:0,mfr:0},S.ba.nas||{});if(!S.ba.faktor)S.ba.faktor=[0,0,0,0,0,0,0]}
+  {const d=DEF.plan.params,pp=S.plan.params||{};S.plan.params=Object.assign({},d,pp,{on:Object.assign({},d.on,pp.on||{}),unit:Object.assign({},d.unit,pp.unit||{})});S.plan.mo=S.plan.mo||{};S.plan.jadwal=S.plan.jadwal||[];S.plan.oa=S.plan.oa||{};S.plan.lib=S.plan.lib||{};S.plan.obj=S.plan.obj||{};S.ba.nas=Object.assign({fr:0,sr:0,asr:0,mfr:0},S.ba.nas||{});if(!S.ba.faktor)S.ba.faktor=[0,0,0,0,0,0,0]}
   const a=m[K('tl_auditi')]||{},v=m[K('tl_verif')]||{};S.tindaklanjut=a;for(const id in v)(S.tindaklanjut[id]=S.tindaklanjut[id]||{}).verif=v[id];
   S._reg=m['connections']||[];S._index=m['index']||[];if(!S._index.find(x=>x.id===Store.cur())){S._index.push({id:Store.cur(),label:'Audit '+Store.cur()});if(Store.role==='admin')await Store.set('index',S._index).catch(()=>{})}}
 const pend={};
@@ -260,6 +260,7 @@ function syncTim(){const b=S.ba;let ch=false;if(!b.roster){b.roster=[];ch=true}
 function timTable(k){const ro=S.ba.roster.filter(x=>x.nama);
   return `<table><tr><th>Nama auditor</th><th>Jabatan</th><th>No. registrasi</th><th></th></tr>${S.ba[k].map((r,i)=>`<tr><td><select ${bind(k+'.'+i+'.rid','ba')} data-re="1"><option value="">${ro.length?'– pilih auditor –':'– isi daftar auditor dulu –'}</option>${ro.map(x=>`<option value="${x.rid}" ${x.rid===r.rid?'selected':''}>${esc(x.nama)}</option>`).join('')}</select></td><td><select ${bind(k+'.'+i+'.jabatan','ba')}>${JAB.map(o=>`<option ${o==r.jabatan?'selected':''}>${o}</option>`).join('')}</select></td><td>${r.reg?esc(r.reg):'<span class="mu">terisi otomatis</span>'}</td><td><button class="btn x" onclick="delRow('ba','${k}',${i})">×</button></td></tr>`).join('')}</table>
   <div class="row"><button class="btn s" onclick="addRow('ba','${k}',${esc(JSON.stringify(JSON.stringify({nama:'',jabatan:'Auditor',reg:'',rid:''})))})">+ Anggota tim</button></div>`}
+function isiNas26(){Object.assign(S.ba.nas,NAS26);save('ba');render()}
 function tabBA(){syncTim();
   const b=S.ba,md=SMKP.mandays(MANDAY,Number(b.pekerja)||0,b.kelas,faktorPct());
   const rt=['Risiko','Nilai Risiko'];
@@ -267,11 +268,12 @@ function tabBA(){syncTim();
   <div class="card"><h2>I.A Data Perusahaan Auditi</h2><div class="g2">
    ${F('Nama perusahaan','ba','auditi')}
    <div><label>Jenis perizinan</label><select ${bind('izin','ba')}>${['IUP','IUPK','IUP Operasi Produksi Pengolahan/Pemurnian','IPR','IUJP'].map(o=>`<option ${o==b.izin?'selected':''}>${o}</option>`).join('')}</select></div>
-   ${F('Jenis komoditas','ba','komoditas')}${F('Periode audit','ba','periode')}</div>${F('Alamat','ba','alamat')}
+   ${F('Jenis komoditas','ba','komoditas')}${F('Periode audit','ba','periode')}</div>${F('Alamat','ba','alamat')}<div class="g2">${F('Batas penyampaian laporan ke Kepala Inspektur Tambang','ba','batasLapor','d')}</div>
   <h3>Kinerja keselamatan pertambangan pada periode audit</h3><div class="g2">${Object.keys(b.kinerja).map(x=>F(x,'ba','kinerja.'+x,'n','step="any" data-re="c"')).join('')}</div></div>
 
   <div class="card"><h2>Dasar faktor penyesuaian &amp; hari kerja audit</h2>
   <h3>Rata-rata nasional pembanding</h3>
+  <div class="row"><button class="btn s" onclick="isiNas26()">Isi nilai Edaran DJMB 2026 (s.d. TW III 2026)</button><span class="mu">FR 0,04; SR 117,39; ASR 249,002; MFR 286,366 (Edaran B-2075/MB.07/DJB/2026, Lampiran I). Gunakan hanya untuk audit periode 2026.</span></div>
   <p class="mu" style="margin-top:0">Isi rata-rata nasional untuk periode audit. Jika terisi, faktor nomor 4 dan 5 di bawah dicentang otomatis dengan membandingkannya terhadap nilai perusahaan pada tabel kinerja di atas. Jika dikosongkan, Anda mencentangnya sendiri.</p>
   <table><tr><th>Indikator</th><th>Perusahaan</th><th>Rata-rata nasional</th><th>Hasil</th></tr>${Object.keys(KIN).map(x=>{const pv=Number(b.kinerja[KIN[x]])||0,nv=Number((b.nas||{})[x])||0;return `<tr><td>${KIN[x]} (${x.toUpperCase()})</td><td>${pv}</td><td><input type="number" step="any" style="width:110px" step="any" ${bind('nas.'+x,'ba','n')} data-re="c" value="${b.nas[x]||''}"></td><td>${nv>0?(pv>nv?'<span class="warn">di atas nasional</span>':'<span class="ok">sama atau di bawah</span>'):'<span class="mu">belum diisi</span>'}</td></tr>`}).join('')}</table>
   <h3>Faktor penyesuaian</h3>
@@ -390,11 +392,17 @@ function genJadwal(){const md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.k
   for(let h=1;h<T;h++){for(const sl of [['P',h===1?'09.00 s.d 12.00':'08.00 s.d 12.00'],['S','13.00 s.d 16.00']])for(const a of au){if(n<q.length)rows.push({h,s:sl[0],w:sl[1],k:q[n++],a})}}
   const L=Math.max(1,...rows.map(r=>r.h))+1;rows.push({h:L,s:'P',w:'08.00 s.d 12.00',k:'Penyusunan temuan dan kesimpulan audit',a:'Seluruh Anggota Tim'},{h:L,s:'S',w:'13.00 s.d 15.00',k:'Pelaksanaan Rapat Penutupan',a:'Seluruh Anggota Tim'});
   S.plan.jadwal=rows;save('plan');render();toast(fillMsg+(n<q.length?(q.length-n)+' kegiatan tidak muat dalam '+(T-1)+' hari kerja lapangan; tambah auditor atau hari.':'Susunan kegiatan dibuat: '+L+' hari terpakai dari '+T+' hari kalender (mandays Tahap II ÷ auditor).'))}
+function tglID(x){if(!x)return '';const m=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],d=new Date(x+'T00:00:00');return isNaN(d)?x:d.getDate()+' '+m[d.getMonth()]+' '+d.getFullYear()}
+function batasWarn(){const b=S.ba.batasLapor;if(!b)return '';const T=Math.max(0,...(S.plan.jadwal||[]).map(r=>Number(r.h)||0));let last='';if(T&&S.plan.tgl){const md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.kelas,faktorPct()),d=md?hariKerja(Math.max(T,1)):[];last=d[T-1]||''}
+  if(!last)return `<p class="mu">Batas penyampaian laporan ke Kepala Inspektur Tambang: <b>${esc(tglID(b))}</b>.</p>`;
+  const sisa=Math.round((new Date(b+'T00:00:00')-new Date(last+'T00:00:00'))/86400000);
+  return sisa<0?`<p class="warn">Jadwal berakhir ${esc(tglID(last))}, setelah batas penyampaian laporan (${esc(tglID(b))}).</p>`:`<p class="mu">Audit lapangan berakhir ${esc(tglID(last))}; ${sisa} hari kalender tersisa sampai batas penyampaian laporan (${esc(tglID(b))}) untuk menyusun laporan dan tindak lanjut.${sisa<21?' <span class="warn">Waktu penyusunan laporan sempit.</span>':''}</p>`}
 function jadwalHTML(){const pl=S.plan,md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.kelas,faktorPct());
   return `<div class="card"><h2>Susunan kegiatan pelaksanaan audit</h2><p class="mu">Isi tanggal mulai Tahap II lalu susun otomatis: departemen untuk tinjauan dokumen dan area berisiko tertinggi untuk observasi dibagi ke auditor per sesi. Hasilnya bisa diubah baris demi baris.</p>
   <div class="g2">${F('Tanggal mulai Tahap II','plan','tgl','d','data-re="1"')}${F('Provinsi (untuk distribusi laporan)','plan','provinsi')}</div>
   <label style="display:flex;gap:8px;align-items:center;margin:4px 0 10px;color:var(--ink)"><input type="checkbox" style="width:auto" ${pl.params.fill?'checked':''} ${bind('params.fill','plan')}> Isi seluruh hari yang tersedia dengan area observasi tambahan (cakupan observasi dinaikkan sesuai risiko tertinggi)</label>
   <div class="row"><button class="btn" onclick="genJadwal()">${pl.jadwal.length?'Susun ulang otomatis':'Susun otomatis'}</button>${md?`<span class="mu">${md.tahap2} mandays Tahap II ÷ ${nAud()} auditor = ${calDays(md)} hari kalender</span>`:''}</div>
+  ${batasWarn()}
   ${pl.jadwal.length?listTable('plan','jadwal',[{h:'Hari ke',f:'h',t:'n'},{h:'Sesi',f:'s',sel:['P','S']},{h:'Waktu',f:'w'},{h:'Kegiatan',f:'k'},{h:'Auditor',f:'a'}],'Kegiatan',{h:1,s:'P',w:'08.00 s.d 12.00',k:'',a:''}):''}
   <div class="row" style="margin-top:12px"><button class="btn" onclick="exportRA()">Unduh Rencana Audit (Word)</button></div></div>`}
 function plain(h){return String(h).replace(/<[^>]+>/g,'')}
@@ -410,8 +418,43 @@ function raData(){const b=S.ba,pl=S.plan,sm=samples(),md=SMKP.mandays(MANDAY,Num
    lingkup:Object.keys(grp).map(g=>({g,a:grp[g]})),pengecualian:MASTER.filter(i=>pl.na[i.id]).map(i=>i.id+' '+i.name),
    tim:tim.map(x=>[/Ketua/.test(x.jabatan)?'Lead Auditor':x.jabatan,x.nama]),
    distribusi:[(S.lap.direktur?'Direktur Operasi '+co:'Direktur Operasi '+co)+' (Asli)','Kepala Teknik Tambang '+co+' (Salinan)','Tim Audit (Salinan)','Direktur Teknik dan Lingkungan Mineral dan Batubara/ Kepala Inspektur Tambang, Kementerian ESDM (Salinan)','Kepala Dinas ESDM Provinsi '+(pl.provinsi||'………')+' (Salinan)'],
+   objek:OBJ.filter(objOn).map(o=>({n:o.n,t:o.t,d:o.d,r:o.r.join(', '),v:objItems(o).filter(i=>!S.plan.na[i.id]&&objFieldOn(i)).map(i=>i.id).join(', ')})),
    hari,items,ELN,ketua:(b.tim2.find(x=>/Ketua/.test(x.jabatan))||b.tim2[0]||{}).nama||'',ktt:b.ktt,tglBA:b.tglBA?DocGen.fmtTgl(b.tglBA):''}}
 async function exportRA(){try{await ensureDoc();dl(await DocGen.toBlob(DocGen.rencanaAudit(raData())),'Rencana Audit.docx')}catch(e){toast('Gagal membuat dokumen: '+e.message);console.error(e)}}
+
+// ---------- Objek prioritas Edaran DJMB B-2075/MB.07/DJB/2026 (Lampiran V) ----------
+const NAS26={fr:0.04,sr:117.39,asr:249.002,mfr:286.366};
+const OBJ=[
+{n:1,t:'Pengelolaan geoteknik lereng pit, dinding jenjang, dan timbunan/disposal (kesesuaian desain dan metode, pemantauan kestabilan, pembatasan aktivitas di kaki lereng, tenaga teknis geoteknik)',d:'Tertimbun longsoran: 24,1% kasus dan 32,6% korban meninggal; lereng/bukaan kritis 17,2% kasus; pemantauan kestabilan tidak dilakukan 10,3% kasus.',r:['II.2','III.6','IV.4.5','IV.6.1','IV.6.2','V.2']},
+{n:2,t:'Pengendalian risiko lalu lintas di jalan tambang dan jalan hauling (geometri, tanggul pengaman, median, rambu, batas kecepatan, jarak beriring, komunikasi radio)',d:'Jalan hauling/tambang: 48,3% kasus dan 34,9% korban; jalan tidak memadai 44,8% kasus.',r:['II.2','IV.1.2','IV.4.3','IV.6.1','V.2']},
+{n:3,t:'Kelayakan dan pemeliharaan alat angkut (rem, ban, kabin), efektivitas P2H, commissioning dan recommissioning, larangan operasi unit tidak layak termasuk unit kontraktor',d:'Alat angkut material sumber kecelakaan 44,8% kasus; sarana/peralatan tidak layak 37,9% kasus; rem blong minimal 10,3% kasus.',r:['IV.4.1','IV.4.3','IV.8','V.2']},
+{n:4,t:'Pengangkutan pekerja (sarana angkut orang yang layak dan disetujui KTT, larangan penumpang di dump truck, pengendalian pergantian gilir kerja)',d:'6,9% kasus dan 7,0% korban meninggal melibatkan pekerja menumpang di kabin dump truck dan kendaraan pengangkut barang.',r:['II.2','IV.1.2','IV.4.3']},
+{n:5,t:'Tambang bawah tanah (ventilasi, pengukuran gas berbahaya, izin kerja khusus, penyanggaan, alat penyelamat diri, tim penyelamat)',d:'6,9% kasus dan 18,6% korban meninggal; terhirup gas beracun dengan korban jamak 16,3%.',r:['III.5','IV.1.3','IV.2','IV.6.1','IV.9']},
+{n:6,t:'Pengelolaan air tambang dan cuaca ekstrem (saluran, gorong-gorong, sump, settling pond, pengamanan perimeter, Trigger Action Response Plan, evakuasi)',d:'6,9% kasus tenggelam/terbawa arus; hujan 123 mm/hari; risiko musim hujan akhir 2026.',r:['II.2','IV.6.1','IV.9']},
+{n:7,t:'Pengendalian bahaya terjepit pada perawatan, perbaikan, dan interaksi pekerja dengan unit (Lock Out Tag Out, pengganjalan, zona aman, komunikasi aba-aba)',d:'Terjepit: 17,2% kasus dan 11,6% korban; keluar dari unit saat mesin hidup 17,2% kasus.',r:['IV.1.2','IV.1.3','IV.4.2'],cat:'Edaran menulis "IV.1.21"; dibaca sebagai IV.1.2.'},
+{n:8,t:'Pekerjaan non-rutin dan penunjang (penebangan pohon, penarikan tali/kabel listrik, perawatan lighting plant): JSA/IBPR spesifik, izin kerja khusus, pengawasan langsung, bahaya biologis',d:'6,9% kasus berakibat mati pada pekerjaan non-rutin (terseret tali, sengatan lebah).',r:['II.2','IV.1','V.2']},
+{n:9,t:'Kualitas identifikasi bahaya, penilaian, dan pengendalian risiko (IBPR) serta prosedur kerja: kesesuaian dengan kondisi lapangan, pemutakhiran, sosialisasi',d:'Prosedur/desain kerja tidak memadai 69,0% kasus; kerja tanpa prosedur 44,8%; IBPR tidak memadai 37,9%.',r:['II.2','III.11','IV.1']},
+{n:10,t:'Kecukupan jumlah dan kualitas pengawas operasional per kegiatan dan gilir kerja (termasuk malam hari), komunikasi dan koordinasi antar pengawas',d:'Pengawasan kurang pada 72,4% kasus (74,4% korban); komunikasi/koordinasi kurang 31,0%.',r:['III.5','V.2']},
+{n:11,t:'Kompetensi, orientasi, dan penempatan pekerja (pelatihan sesuai jabatan, pemahaman bahaya, pendampingan pekerja dengan masa kerja ≤ 2 tahun)',d:'60,7% korban berpengalaman kerja ≤ 2 tahun; operator dan pengemudi 65,1% korban.',r:['III.9','III.10','IV.4.4']},
+{n:12,t:'Pemantauan dan pengelolaan perusahaan jasa pertambangan (seleksi berbasis kinerja, bukti kompetensi pekerja dan kelayakan peralatan, evaluasi kinerja berkala)',d:'75,0% korban meninggal adalah pekerja kontraktor dan subkontraktor.',r:['IV.8']},
+{n:13,t:'Kesiapsiagaan dan tanggap darurat (tim, waktu respons, peralatan penyelamatan untuk tertimbun, tenggelam, gas beracun, simulasi, P3K)',d:'Penanganan keadaan darurat belum memadai 34,5% kasus (48,8% korban).',r:['III.8','IV.9','IV.10']},
+{n:14,t:'Pengelolaan kesehatan kerja (tindak lanjut pemeriksaan kesehatan, fit to work, manajemen kelelahan/fatigue, kesiapan penanganan medis darurat)',d:'KAPTK Jan–Sep 2026 setara 25,6% korban kecelakaan; fatigue teridentifikasi pada 10,3% kasus.',r:['IV.3.3','IV.3.5','IV.3.6','IV.10']},
+{n:15,t:'Kelengkapan pelaporan, penyelidikan, dan analisis kecelakaan ringan, kejadian berbahaya, dan near miss sebagai leading indicator, serta tindak lanjut rekomendasi',d:'Komposisi korban 2,1% ringan : 53,6% berat : 44,3% meninggal, indikasi pelaporan kecelakaan ringan belum optimal.',r:['III.12','V.1','V.4','V.7']}];
+const FIELDM=['OBS','UKUR','WWC'];
+function objOn(o){const v=S.plan.obj[o.n];return v==null?1:!!v}
+function objItems(o){return MASTER.filter(i=>o.r.some(r=>i.id===r||i.id.startsWith(r+'.')))}
+function objOf(id){return OBJ.filter(o=>objOn(o)&&o.r.some(r=>id===r||id.startsWith(r+'.'))).map(o=>o.n)}
+function objFieldOn(it){return it.cp.some((c,i)=>c.m.some(m=>FIELDM.includes(m)&&mActive(it,i,c,m)))}
+function objCanField(it){return it.cp.some(c=>c.m.some(m=>FIELDM.includes(m)))}
+function objCover(o){const its=objItems(o).filter(i=>!S.plan.na[i.id]&&objCanField(i)),on=its.filter(objFieldOn);return {tot:its.length,on:on.length,doc:objItems(o).filter(i=>!S.plan.na[i.id]&&!objCanField(i)).length}}
+function objBadge(id){const l=objOf(id);return l.length?` <span class="pill" title="Objek prioritas Edaran DJMB 2026 (Lampiran V)" style="background:var(--warnbg,#fff3cd);color:var(--warn,#8a5a00);padding:1px 7px;border-radius:10px;font-size:11px">Prioritas edaran 2026: #${l.join(', #')}</span>`:''}
+function togObj(n,v){S.plan.obj[n]=v?1:0;save('plan');render()}
+function applyObj(){let n=0;OBJ.filter(objOn).forEach(o=>objItems(o).filter(i=>!S.plan.na[i.id]).forEach(it=>it.cp.forEach((c,i)=>c.m.forEach(m=>{if(FIELDM.includes(m)&&!mActive(it,i,c,m)){S.plan.mo[it.id+'|'+i+'|'+m]=1;n++}}))));save('plan');toast(n?n+' metode lapangan diaktifkan':'Semua sub-elemen prioritas sudah punya metode lapangan aktif');render()}
+function objCard(){const rows=OBJ.map(o=>{const cv=objCover(o),on=objOn(o);
+  return `<tr style="${on?'':'opacity:.55'}"><td style="width:34px"><b>${o.n}</b></td><td><label style="display:flex;gap:8px;align-items:flex-start;font-weight:600"><input type="checkbox" ${on?'checked':''} onchange="togObj(${o.n},this.checked)" style="margin-top:3px"><span>${esc(o.t)}</span></label><div class="mu" style="margin:3px 0 0 24px">${esc(o.d)}</div></td><td style="width:150px">${o.r.map(r=>`<span class="pill">${r}</span>`).join(' ')}${o.cat?`<div class="mu" style="font-size:11px">${esc(o.cat)}</div>`:''}</td><td style="width:130px">${on?(cv.tot?(cv.on===cv.tot?`<span class="ok">${cv.on}/${cv.tot} sub-elemen</span>`:`<span class="warn">${cv.on}/${cv.tot} sub-elemen</span>`)+'<div class="mu" style="font-size:11px">punya metode lapangan aktif'+(cv.doc?'; '+cv.doc+' lainnya hanya dokumen':'')+'</div>':'<span class="mu">hanya tinjauan dokumen/rekaman</span>'):'<span class="mu">tidak dipakai</span>'}</td></tr>`}).join('');
+  return `<div class="card"><h2>Objek prioritas Edaran DJMB 2026</h2><p class="mu">Rekomendasi objek audit dari Edaran Dirjen Minerba No. B-2075/MB.07/DJB/2026 (6 November 2026), Lampiran V. Edaran meminta objek ini diverifikasi langsung di lapangan sesuai konteks perusahaan. Hilangkan centang pada objek yang tidak relevan (mis. tambang bawah tanah untuk tambang terbuka). Statistik di kolom bawah judul adalah data nasional s.d. Triwulan III 2026 dari edaran; ganti pada edaran tahun berikutnya.</p>
+  <table><tr><th>No</th><th>Objek audit</th><th>Sub-elemen terkait</th><th>Cakupan rencana</th></tr>${rows}</table>
+  <div class="row" style="margin-top:10px"><button class="btn s" onclick="applyObj()">Aktifkan metode lapangan untuk sub-elemen prioritas</button><span class="mu">Menyalakan observasi, uji empiris, dan wawancara pada checkpoint yang menyediakannya. Atur waktunya pada kartu kapasitas.</span></div></div>`}
 function tabPlan(){
   const sm=samples(),pl=S.plan,md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.kelas,faktorPct());
   return `<div class="card"><h2>Lingkup audit: area &amp; pelaksana</h2><p class="mu">Area milik IUP maupun area kontraktor (mis. PIT yang dioperasikan PT AMM). Risiko 1–25 diambil dari Top Risks bila namanya cocok; angka manual dipakai bila lebih tinggi.</p>
@@ -420,11 +463,12 @@ function tabPlan(){
   ${listTable('plan','manpower',[{h:'Departemen',f:'dept',re:1,inh:1},{h:'Perusahaan',f:'pt',inh:1,dl:['IUP']},{h:'Level',f:'level',sel:LEVEL,re:1},{h:'Jumlah',f:'jumlah',t:'n',re:1}],'Strata',{dept:'',pt:'IUP',level:'Pengawas Operasional',jumlah:0})}
   <h3>Parameter sampling</h3><div class="g2">${F('Margin error Slovin (e)','plan','params.e','n','step="0.01"')}${F('Wawancara: % pengawas (min 1/strata)','plan','params.wwcFrac','n','data-re="1"')}${F('Observasi: % area (risiko tertinggi dahulu)','plan','params.obsCover','n','data-re="1"')}${F('Observasi: minimal area','plan','params.obsMin','n','data-re="1"')}${F('Periode rekaman','plan','params.periodeTR')}</div>
   ${capHTML(sm,md)}${md?`<p>Waktu audit: <b>${md.total}</b> hari (Tahap I ${md.tahap1}, Tahap II ${md.tahap2}) – dari Berita Acara.</p>`:''}</div>
+  ${objCard()}
   ${jadwalHTML()}
   <div class="card"><h2>Metode &amp; sampel per kriteria</h2>
   <div class="row"><button class="btn s" onclick="addAllRecEverywhere()">Tambahkan semua rekomendasi sampel</button><span class="mu">Rekomendasi disusun dari kriteria nilai tertinggi dan tidak masuk dokumen sebelum Anda tambahkan.</span></div><p class="mu">Diturunkan dari kriteria nilai tertinggi setiap sub-elemen. Centang N/A bila tidak berlaku (masuk Pengecualian).</p>
   <table><tr><th style="width:55px">ID</th><th>Sub-elemen / checkpoint</th><th style="width:70px">N/A</th></tr>
-  ${MASTER.map(it=>{const na=pl.na[it.id];return `<tr><td><b>${it.id}</b></td><td><b>${esc(it.name)}</b> <span class="mu">(maks ${it.max})</span><details ${na?'':'open'}><summary class="mu">${it.cp.length} checkpoint</summary>${it.cp.map((c,i)=>`<div style="margin:5px 0;padding-left:8px;border-left:3px solid var(--line)">${i+1}. ${esc(cl(c.t))}${detHTML(it,i)}${cpPills(it,i,c,sm,true)}</div>`).join('')}${libHTML(it)}${oaHTML(it,sm)}</details></td><td>${it.na?`<input type="checkbox" style="width:auto" ${na?'checked':''} onchange="S.plan.na['${it.id}']=this.checked?1:0;save('plan')">`:'<span class="mu">–</span>'}</td></tr>`}).join('')}</table></div>`}
+  ${MASTER.map(it=>{const na=pl.na[it.id];return `<tr><td><b>${it.id}</b></td><td><b>${esc(it.name)}</b>${objBadge(it.id)} <span class="mu">(maks ${it.max})</span><details ${na?'':'open'}><summary class="mu">${it.cp.length} checkpoint</summary>${it.cp.map((c,i)=>`<div style="margin:5px 0;padding-left:8px;border-left:3px solid var(--line)">${i+1}. ${esc(cl(c.t))}${detHTML(it,i)}${cpPills(it,i,c,sm,true)}</div>`).join('')}${libHTML(it)}${oaHTML(it,sm)}</details></td><td>${it.na?`<input type="checkbox" style="width:auto" ${na?'checked':''} onchange="S.plan.na['${it.id}']=this.checked?1:0;save('plan')">`:'<span class="mu">–</span>'}</td></tr>`}).join('')}</table></div>`}
 
 
 // ---------- Penilaian ----------
@@ -568,6 +612,7 @@ function addImg(inp,grup){const f=inp.files[0];if(!f)return;const r=new FileRead
   S.lap.images.push({grup,judul:f.name.replace(/\.\w+$/,''),dataUrl:c.toDataURL('image/jpeg',0.8),w,h});save('lap');render()};im.src=r.result};r.readAsDataURL(f)}
 function tabLap(){const L=S.lap,k=kesList(),ex=(f,l,rows)=>`<label>${l}</label><input value="${esc(L[f])}" oninput="setL('${f}',this.value)">`;
   return `<div class="card"><h2>Unduh dokumen</h2><div class="row"><button class="btn" onclick="exportAny('LAP')">Laporan Audit (Word)</button><button class="btn" onclick="exportAny('L1')">Lampiran 1 (Excel)</button><button class="btn" onclick="exportAny('L2')">Lampiran 2 RTL</button><button class="btn" onclick="exportAny('L3')">Lampiran 3 Kesesuaian</button><button class="btn" onclick="exportAny('L4')">Lampiran 4 OFI</button><button class="btn s" onclick="exportDoc('L5')">Lampiran 5</button><button class="btn s" onclick="exportDoc('L6')">Lampiran 6</button><button class="btn" onclick="exportAll()">Unduh semua</button></div>
+  <p class="mu"><b>Penyampaian ke Ditjen Minerba</b> (Edaran B-2075/MB.07/DJB/2026, butir 12): laporan, termasuk berita acara Tahap I, rencana audit Tahap II, dan laporan perusahaan jasa pertambangan beserta hasil TPKKP, disampaikan paling lambat ${esc(tglID(S.ba.batasLapor)||'15 Januari tahun berikutnya')} melalui formulir <a href="https://forms.gle/mcGfgddQDGTfn1Tz9" target="_blank" rel="noopener">forms.gle/mcGfgddQDGTfn1Tz9</a>, dengan surat pengantar elektronik ke sekretariat.dbt@esdm.go.id, tembusan djmb@esdm.go.id, sekretaris.dbt@gmail.com, dan miningsafety18501@gmail.com. Tautan dan alamat ini berasal dari edaran 2026; periksa lagi pada edaran tahun berikutnya.</p>
   <p class="mu">Daftar isi laporan berupa field Word: saat dibuka, pilih "Ya" untuk memperbarui field agar nomor halaman muncul.</p></div>
   <div class="card"><h2>Data profil laporan</h2><div class="g2">${[['kantorPusat','Alamat kantor pusat'],['alamat','Alamat site / domisili'],['izin','Jenis perizinan (jika beda dari Berita Acara)'],['nomorIzin','Nomor izin'],['direktur','Direktur'],['ktt','Kepala Teknik Tambang'],['luas','Luas area konsesi'],['pekerja','Jumlah pekerja (mis. 1743 DP dan mitra)'],['kota','Kota penandatanganan'],['periodeLaporan','Periode yang diaudit'],['tglLaporan','Tanggal laporan'],['tglRespon','Tanggal respon manajemen']].map(([f,l])=>`<div><label>${l}</label><input ${/^tgl/.test(f)?'type="date"':''} value="${esc(L[f])}" oninput="setL('${f}',this.value)"></div>`).join('')}</div>
   <label>Narasi profil (opsional)</label><textarea oninput="setL('profilNarasi',this.value)">${esc(L.profilNarasi)}</textarea>
