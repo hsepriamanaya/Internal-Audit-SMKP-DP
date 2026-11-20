@@ -19,7 +19,7 @@ function table(rows,widths){return new Table({width:{size:widths.reduce((a,b)=>a
 function head(txt){return para(txt,{b:true,al:AlignmentType.CENTER,after:200})}
 function kv(k,v){return new Paragraph({spacing:{after:40},tabStops:[{type:'left',position:2700}],children:[run(k,{bold:true}),run('\t: '+(v||''))]})}
 function checkRow(kat){const m={KRITIKAL:'Kritikal',MAYOR:'Major',MINOR:'Minor'};
-  return ['Kritikal','Major','Minor'].map(x=>para((m[kat]===x?'☒ ':'☐ ')+x,{after:40}))}
+  return ['Kritikal','Major','Minor'].map(x=>new Paragraph({spacing:{after:40},children:[new TextRun({text:m[kat]===x?'\u2612':'\u2610',font:{ascii:'MS Gothic',hAnsi:'MS Gothic',eastAsia:'MS Gothic',cs:'MS Gothic'},size:SZ}),run('  '+x)]}))}
 function bullets(a){return (a||[]).length?a.map(x=>para('- '+x,{after:30})):[para('')]}
 function fmtTgl(s){if(!s)return '';const m=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];const d=new Date(s);return isNaN(d)?s:d.getDate()+' '+m[d.getMonth()]+' '+d.getFullYear()}
 function ttd(label,nama,tgl,w){const c=[Math.round(w*.2),Math.round(w*.3),Math.round(w*.25),w-Math.round(w*.2)-Math.round(w*.3)-Math.round(w*.25)];
