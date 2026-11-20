@@ -78,6 +78,7 @@ tbody tr:hover td,table tr:hover>td{background:color-mix(in srgb,var(--sunk) 70%
 .kpi .kt b{color:var(--kt)}.kpi .my b{color:var(--my)}.kpi .mn b{color:var(--mn)}
 details>summary{cursor:pointer;color:var(--pri);font-weight:500;padding:4px 0;list-style:revert}
 .det{margin:4px 0 6px;padding:4px 10px;border-left:3px solid var(--ps);background:var(--sunk);border-radius:0 6px 6px 0;font-size:13.5px}.det ul{margin:2px 0 2px 18px;padding:0}.det li{margin:1px 0}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}.dlg{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(640px,100%);max-height:90vh;overflow:auto;box-shadow:var(--sh)}
 .pill.off{opacity:.5;text-decoration:line-through}.pill.pk{cursor:pointer;user-select:none}.pill.pk:hover{border-color:var(--pri)}.pill.W{background:var(--ps-bg);border-color:transparent}.pill.O{border-style:dashed}
 .meter{height:12px;border-radius:99px;background:var(--sunk);border:1px solid var(--line);overflow:hidden}.meter i{display:block;height:100%;background:var(--ps)}.meter.over i{background:var(--my)}
 .note{border-left:3px solid var(--hi);background:var(--sunk);padding:10px 14px;border-radius:0 var(--r) var(--r) 0;color:var(--mut)}
@@ -211,12 +212,34 @@ document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset
   setp(S[t.dataset.k],t.dataset.p,v);save(t.dataset.k);});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.re){setTimeout(render,0)}});
 function F(label,k,p,type,extra){const v=getp(S[k],p);return `<div><label>${label}</label><input ${bind(p,k,type)} value="${esc(v)}" ${type==='n'?'type="number"':type==='d'?'type="date"':''} ${extra||''}></div>`}
-function listTable(k,p,cols,addLabel,defRow){ // cols [{h,f,t}]
-  const arr=getp(S[k],p);
-  return `<table><tr>${cols.map(c=>`<th>${c.h}</th>`).join('')}<th></th></tr>${arr.map((r,i)=>`<tr>${cols.map(c=>`<td>${c.sel?`<select ${bind(p+'.'+i+'.'+c.f,k)} data-re="${c.re?1:''}">${c.sel.map(o=>`<option ${o==r[c.f]?'selected':''}>${esc(o)}</option>`).join('')}</select>`:`<input ${bind(p+'.'+i+'.'+c.f,k,c.t)} ${c.t==='n'?'type="number"':''} value="${esc(r[c.f])}" ${c.re?'data-re="1"':''}>`}</td>`).join('')}<td><button class="btn x" onclick="delRow('${k}','${p}',${i})">×</button></td></tr>`).join('')}</table>
-  <div class="row"><button class="btn s" onclick="addRow('${k}','${p}',${esc(JSON.stringify(JSON.stringify(defRow)))})">+ ${addLabel}</button></div>`}
-function addRow(k,p,d){getp(S[k],p).push(JSON.parse(d));save(k);render()}
+const LT={};
+function listTable(k,p,cols,addLabel,defRow){ // cols [{h,f,t,sel,re,ro,inh,dl}]
+  const arr=getp(S[k],p);LT[k+'|'+p]={cols,def:JSON.stringify(defRow)};
+  const dls=cols.filter(c=>c.dl).map(c=>{const v=[...new Set([...c.dl,...arr.map(r=>r[c.f]).filter(Boolean)])];return `<datalist id="dl-${k}-${p}-${c.f}">${v.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`}).join('');
+  return `<table><tr>${cols.map(c=>`<th>${c.h}</th>`).join('')}<th></th></tr>${arr.map((r,i)=>`<tr>${cols.map(c=>`<td>${c.sel?`<select ${bind(p+'.'+i+'.'+c.f,k)} data-re="${c.re?1:''}">${c.sel.map(o=>`<option ${o==r[c.f]?'selected':''}>${esc(o)}</option>`).join('')}</select>`:`<input ${bind(p+'.'+i+'.'+c.f,k,c.t)} ${c.t==='n'?'type="number" step="any"':''} ${c.dl?`list="dl-${k}-${p}-${c.f}"`:''} value="${esc(r[c.f])}" ${c.re?'data-re="1"':''}>`}</td>`).join('')}<td><button class="btn x" onclick="delRow('${k}','${p}',${i})">×</button></td></tr>`).join('')}</table>${dls}
+  <div class="row"><button class="btn s" onclick="addRow('${k}','${p}',${esc(JSON.stringify(JSON.stringify(defRow)))})">+ ${addLabel}</button><button class="btn s" onclick="pasteDlg('${k}','${p}')" title="Salin sel dari Excel lalu tempel di sini">Tempel dari Excel</button>${arr.length>1?`<button class="btn s" onclick="clearRows('${k}','${p}')">Kosongkan tabel</button>`:''}</div>`}
+function newRow(lt,arr){const row=JSON.parse(lt.def),last=arr[arr.length-1];if(last)lt.cols.forEach(c=>{if(c.inh&&last[c.f]!=null&&last[c.f]!=='')row[c.f]=last[c.f]});return row}
+function addRow(k,p,d){const arr=getp(S[k],p),lt=LT[k+'|'+p];arr.push(lt?newRow(lt,arr):JSON.parse(d));save(k);render()}
 function delRow(k,p,i){getp(S[k],p).splice(i,1);save(k);render()}
+function clearRows(k,p){if(!confirm('Hapus semua baris pada tabel ini?'))return;getp(S[k],p).length=0;save(k);render()}
+function applyGrid(k,p,r0,c0,M,rep){const lt=LT[k+'|'+p],arr=getp(S[k],p),ed=lt.cols.filter(c=>!c.ro);if(rep){arr.length=0;r0=0}let n=0;
+  M.forEach((line,ri)=>{const idx=r0+ri;while(arr.length<=idx)arr.push(newRow(lt,arr));const row=arr[idx];
+    line.forEach((v,ci)=>{const c=ed[c0+ci];if(!c)return;v=String(v).trim();
+      if(c.sel){const m=c.sel.find(o=>String(o).toLowerCase()===v.toLowerCase());if(m!=null)row[c.f]=m}
+      else if(c.t==='n'){const x=Number(v.replace('%','').replace(/\s/g,'').replace(',','.'));row[c.f]=isNaN(x)?0:x}
+      else row[c.f]=v});n++});
+  save(k);render();toast(n+' baris ditempel')}
+function parseGrid(txt,ed){let L=String(txt).replace(/\r/g,'').split('\n');while(L.length&&!L[L.length-1].trim())L.pop();let M=L.map(l=>l.split('\t'));
+  if(M.length>1){const hd=ed.map(c=>c.h.toLowerCase());const hit=M[0].filter(x=>hd.includes(String(x).trim().toLowerCase())).length;if(hit>=Math.max(1,Math.ceil(M[0].length/2)))M=M.slice(1)}return M}
+function firstFree(k,p){const lt=LT[k+'|'+p],arr=getp(S[k],p),ed=lt.cols.filter(c=>!c.ro&&!c.inh&&!c.sel),emp=r=>ed.every(c=>r[c.f]===''||r[c.f]==null||r[c.f]===0);let i=arr.length;while(i>0&&emp(arr[i-1]))i--;return i}
+function pasteDlg(k,p){const lt=LT[k+'|'+p],ed=lt.cols.filter(c=>!c.ro),ov=document.createElement('div');ov.className='ov';
+  ov.innerHTML=`<div class="dlg" role="dialog" aria-modal="true" aria-label="Tempel dari Excel"><h3>Tempel dari Excel</h3><p class="mu" style="margin-top:0">Blok sel di Excel, salin (Ctrl+C), lalu tempel di kotak ini. Urutan kolom harus: <b>${ed.map(c=>esc(c.h)).join(' → ')}</b>. Baris judul kolom boleh ikut tersalin.</p><textarea rows="10" style="width:100%" placeholder="Tempel di sini (Ctrl+V)"></textarea><label style="display:flex;gap:8px;align-items:center;margin:8px 0;color:var(--ink)"><input type="checkbox" style="width:auto"> Ganti isi tabel (hapus baris yang sudah ada)</label><div class="row"><button class="btn" data-ok>Tempel ke tabel</button><button class="btn s" data-no>Batal</button></div></div>`;
+  document.body.appendChild(ov);const ta=ov.querySelector('textarea');ta.focus();const close=()=>ov.remove();
+  ov.querySelector('[data-no]').onclick=close;ov.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+  ov.querySelector('[data-ok]').onclick=()=>{const M=parseGrid(ta.value,ed);if(!M.length||!ta.value.trim()){toast('Belum ada data yang ditempel');return}applyGrid(k,p,firstFree(k,p),0,M,ov.querySelector('input').checked);close()}}
+document.addEventListener('paste',e=>{const t=e.target;if(!t||!t.dataset||!t.dataset.p||!t.dataset.k)return;const m=/^(.*)\.(\d+)\.([^.]+)$/.exec(t.dataset.p);if(!m)return;const lt=LT[t.dataset.k+'|'+m[1]];if(!lt)return;
+  const txt=(e.clipboardData||window.clipboardData).getData('text');if(!/[\t\n]/.test(txt.replace(/\n$/,'')))return;
+  const ed=lt.cols.filter(c=>!c.ro),c0=ed.findIndex(c=>c.f===m[3]);if(c0<0)return;e.preventDefault();applyGrid(t.dataset.k,m[1],Number(m[2]),c0,parseGrid(txt,[]).filter(r=>r.some(x=>String(x).trim())),false)});
 
 // ---------- Tab: Berita Acara ----------
 const KIN={fr:'Frequency rate',sr:'Severity rate',asr:'Absence severity rate',mfr:'Morbidity frequency rate'};
@@ -392,9 +415,9 @@ async function exportRA(){try{await ensureDoc();dl(await DocGen.toBlob(DocGen.re
 function tabPlan(){
   const sm=samples(),pl=S.plan,md=SMKP.mandays(MANDAY,Number(S.ba.pekerja)||0,S.ba.kelas,faktorPct());
   return `<div class="card"><h2>Lingkup audit: area &amp; pelaksana</h2><p class="mu">Area milik IUP maupun area kontraktor (mis. PIT yang dioperasikan PT AMM). Risiko 1–25 diambil dari Top Risks bila namanya cocok; angka manual dipakai bila lebih tinggi.</p>
-  ${listTable('plan','areas',[{h:'Area',f:'nama',re:1},{h:'Kelompok',f:'grup'},{h:'Pelaksana',f:'pelaksana'},{h:'Risiko manual (1–25)',f:'risiko',t:'n',re:1},{h:'Risiko terpakai',f:'x',ro:1}],'Area',{nama:'',grup:'Area Mining',pelaksana:'IUP',risiko:0,x:''}).replace(/<td><input data-p="areas\.(\d+)\.x"[^>]*><\/td>/g,(m,i)=>`<td>${areaRisk(pl.areas[i])}</td>`)}
+  ${listTable('plan','areas',[{h:'Area',f:'nama',re:1},{h:'Kelompok',f:'grup',inh:1,dl:['Area Mining','Area Office','Area Workshop','Area Warehouse','Area Fasilitas']},{h:'Pelaksana',f:'pelaksana',inh:1,dl:['IUP']},{h:'Risiko manual (1–25)',f:'risiko',t:'n',re:1},{h:'Risiko terpakai',f:'x',ro:1}],'Area',{nama:'',grup:'Area Mining',pelaksana:'IUP',risiko:0,x:''}).replace(/<td><input data-p="areas\.(\d+)\.x"[^>]*><\/td>/g,(m,i)=>`<td>${areaRisk(pl.areas[i])}</td>`)}
   <h3>Manpower: pengawas per level × departemen</h3><p class="mu">Dasar wawancara (stratified). Baris level "Pekerja" dipakai untuk populasi kuesioner.</p>
-  ${listTable('plan','manpower',[{h:'Departemen',f:'dept',re:1},{h:'Perusahaan',f:'pt'},{h:'Level',f:'level',sel:LEVEL,re:1},{h:'Jumlah',f:'jumlah',t:'n',re:1}],'Strata',{dept:'',pt:'IUP',level:'Pengawas Operasional',jumlah:0})}
+  ${listTable('plan','manpower',[{h:'Departemen',f:'dept',re:1,inh:1},{h:'Perusahaan',f:'pt',inh:1,dl:['IUP']},{h:'Level',f:'level',sel:LEVEL,re:1},{h:'Jumlah',f:'jumlah',t:'n',re:1}],'Strata',{dept:'',pt:'IUP',level:'Pengawas Operasional',jumlah:0})}
   <h3>Parameter sampling</h3><div class="g2">${F('Margin error Slovin (e)','plan','params.e','n','step="0.01"')}${F('Wawancara: % pengawas (min 1/strata)','plan','params.wwcFrac','n','data-re="1"')}${F('Observasi: % area (risiko tertinggi dahulu)','plan','params.obsCover','n','data-re="1"')}${F('Observasi: minimal area','plan','params.obsMin','n','data-re="1"')}${F('Periode rekaman','plan','params.periodeTR')}</div>
   ${capHTML(sm,md)}${md?`<p>Waktu audit: <b>${md.total}</b> hari (Tahap I ${md.tahap1}, Tahap II ${md.tahap2}) – dari Berita Acara.</p>`:''}</div>
   ${jadwalHTML()}
