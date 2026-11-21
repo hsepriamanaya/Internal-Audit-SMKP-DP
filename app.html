@@ -165,7 +165,7 @@ function toast(t){const m=$('#msg');m.textContent=t;m.style.display='block';clea
 const DEF={
  ba:{auditi:'',izin:'IUP',komoditas:'',alamat:'',periode:'',
   kinerja:{'Kecelakaan cedera ringan':0,'Kecelakaan cedera berat':0,'Kecelakaan mati':0,'Frequency rate':0,'Severity rate':0,'Kejadian berbahaya':0,'Absence severity rate':0,'Morbidity frequency rate':0,'Kejadian akibat penyakit tenaga kerja':0,'Frekuensi penyakit akibat kerja':0},
-  faktor:[0,0,0,0,0,0,0],nas:{fr:0,sr:0,asr:0,mfr:0},batasLapor:'2027-01-15',edaran:'2026',roster:[],sertifikasi:0,pekerja:0,kelas:'tinggi',
+  faktor:[0,0,0,0,0,0,0],nas:{fr:0,sr:0,asr:0,mfr:0},batasLapor:'2027-01-15',edaran:'2026',tpkkp:{url:'',terakhir:'',data:null},roster:[],sertifikasi:0,pekerja:0,kelas:'tinggi',
   tim1:[{nama:'',jabatan:'Ketua Tim Auditor',reg:''}],tim2:[{nama:'',jabatan:'Ketua Tim Auditor',reg:''}],skTim:'',skTgl:'',
   kontak:{tgl:'',media:'Pertemuan',wakil:'',jabatan:''},
   tglKelayakan:'',kelayakan:[1,1,1,1,1,1,1],kecukupan:[1,1,1,1,1,1,1],
@@ -187,7 +187,7 @@ async function load(){
   const ks=Object.keys(DEF).filter(k=>k!=='tindaklanjut'),keys=['index','connections',...ks.map(K),K('tl_auditi'),K('tl_verif')];
   const m=await Store.mget(keys);
   ks.forEach(k=>{S[k]=Object.assign(JSON.parse(JSON.stringify(DEF[k])),m[K(k)]||{})});
-  {const d=DEF.plan.params,pp=S.plan.params||{};S.plan.params=Object.assign({},d,pp,{on:Object.assign({},d.on,pp.on||{}),unit:Object.assign({},d.unit,pp.unit||{})});S.plan.mo=S.plan.mo||{};S.plan.jadwal=S.plan.jadwal||[];S.plan.oa=S.plan.oa||{};S.plan.lib=S.plan.lib||{};S.plan.obj=S.plan.obj||{};S.ba.nas=Object.assign({fr:0,sr:0,asr:0,mfr:0},S.ba.nas||{});if(!S.ba.faktor)S.ba.faktor=[0,0,0,0,0,0,0];S.plan.pel=S.plan.pel||{};{const sv=m[K('ba')]||{};if(!sv.edaran&&window.EDARAN){const y=((S.ba.periode||'').match(/20\d\d/g)||[]).pop();S.ba.edaran=EDARAN.versi[y]?y:EDARAN.terbaru;if(!sv.batasLapor)S.ba.batasLapor=EDARAN.versi[S.ba.edaran].batasLapor}}}
+  {const d=DEF.plan.params,pp=S.plan.params||{};S.plan.params=Object.assign({},d,pp,{on:Object.assign({},d.on,pp.on||{}),unit:Object.assign({},d.unit,pp.unit||{})});S.plan.mo=S.plan.mo||{};S.plan.jadwal=S.plan.jadwal||[];S.plan.oa=S.plan.oa||{};S.plan.lib=S.plan.lib||{};S.plan.obj=S.plan.obj||{};S.ba.nas=Object.assign({fr:0,sr:0,asr:0,mfr:0},S.ba.nas||{});if(!S.ba.faktor)S.ba.faktor=[0,0,0,0,0,0,0];S.ba.tpkkp=Object.assign({url:'',terakhir:'',data:null},S.ba.tpkkp||{});S.plan.pel=S.plan.pel||{};{const sv=m[K('ba')]||{};if(!sv.edaran&&window.EDARAN){const y=((S.ba.periode||'').match(/20\d\d/g)||[]).pop();S.ba.edaran=EDARAN.versi[y]?y:EDARAN.terbaru;if(!sv.batasLapor)S.ba.batasLapor=EDARAN.versi[S.ba.edaran].batasLapor}}}
   const a=m[K('tl_auditi')]||{},v=m[K('tl_verif')]||{};S.tindaklanjut=a;for(const id in v)(S.tindaklanjut[id]=S.tindaklanjut[id]||{}).verif=v[id];
   S._reg=m['connections']||[];S._index=m['index']||[];if(!S._index.find(x=>x.id===Store.cur())){S._index.push({id:Store.cur(),label:'Audit '+Store.cur()});if(Store.role==='admin')await Store.set('index',S._index).catch(()=>{})}}
 const pend={};
@@ -260,6 +260,33 @@ function syncTim(){const b=S.ba;let ch=false;if(!b.roster){b.roster=[];ch=true}
 function timTable(k){const ro=S.ba.roster.filter(x=>x.nama);
   return `<table><tr><th>Nama auditor</th><th>Jabatan</th><th>No. registrasi</th><th></th></tr>${S.ba[k].map((r,i)=>`<tr><td><select ${bind(k+'.'+i+'.rid','ba')} data-re="1"><option value="">${ro.length?'– pilih auditor –':'– isi daftar auditor dulu –'}</option>${ro.map(x=>`<option value="${x.rid}" ${x.rid===r.rid?'selected':''}>${esc(x.nama)}</option>`).join('')}</select></td><td><select ${bind(k+'.'+i+'.jabatan','ba')}>${JAB.map(o=>`<option ${o==r.jabatan?'selected':''}>${o}</option>`).join('')}</select></td><td>${r.reg?esc(r.reg):'<span class="mu">terisi otomatis</span>'}</td><td><button class="btn x" onclick="delRow('ba','${k}',${i})">×</button></td></tr>`).join('')}</table>
   <div class="row"><button class="btn s" onclick="addRow('ba','${k}',${esc(JSON.stringify(JSON.stringify({nama:'',jabatan:'Auditor',reg:'',rid:''})))})">+ Anggota tim</button></div>`}
+
+// ---------- TPKKP: hasil dari web penilaian TPKKP ----------
+function tpkkpDue(){const t=EDR().tpkkp;if(!t)return null;const y=parseInt(S.ba.tpkkp.terakhir,10);if(!y||y<=2023)return {tgl:'2026-12-31',cat:y?'Penilaian menyeluruh terakhir '+y+' (2023 atau sebelumnya)':'Belum pernah ada penilaian menyeluruh'};return {tgl:(y+3)+'-12-31',cat:'Tahun ketiga sejak penilaian menyeluruh terakhir ('+y+')'}}
+function tpkkpImport(txt){let j;try{j=JSON.parse(String(txt).trim())}catch(e){toast('Teks bukan JSON yang valid. Salin ulang dari web TPKKP.');return false}
+  if(!j||j.format!=='smkp-tpkkp'||!Array.isArray(j.indikator)||j.indikator.length!==4||typeof j.total!=='number'){toast('Format tidak dikenali. Gunakan tombol "Kirim ke Audit SMKP" di web TPKKP.');return false}
+  S.ba.tpkkp.data=j;S.ba.tpkkp.diimpor=new Date().toISOString();save('ba');toast('Hasil TPKKP diimpor');render();return true}
+function tpkkpPaste(){const el=document.getElementById('tpIn');if(el&&el.value.trim())tpkkpImport(el.value)}
+function tpkkpFile(inp){const f=inp.files&&inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>tpkkpImport(r.result);r.readAsText(f);inp.value=''}
+function tpkkpClear(){if(!confirm('Hapus hasil TPKKP yang diimpor dari audit ini?'))return;S.ba.tpkkp.data=null;save('ba');render()}
+function tpkkpDoc(){const d=S.ba.tpkkp.data;if(!d)return null;return {total:d.total,kategori:d.kategori,periode:d.periode||'',cakupan:d.cakupan||'',perusahaan:d.perusahaan||'',indikator:d.indikator.map(x=>({no:x.no,nama:x.nama,bobot:x.bobot,nilai:x.nilai,kategori:x.kategori})),tindak:/^(Dasar|Reaktif)$/.test(d.kategori||'')}}
+function tpkkpCard(){const t=EDR().tpkkp,tp=S.ba.tpkkp,d=tp.data,due=tpkkpDue();
+  const chip=k=>`<span class="pill" style="font-weight:600">${esc(k||'')}</span>`;
+  let body='';
+  if(d){const wOk=!(EDR().tpkkp)||d.indikator.every((x,i)=>Math.abs(x.bobot-EDR().tpkkp.indikator[i].b)<0.001),sum=d.indikator.reduce((a,x)=>a+Number(x.nilai||0),0),tot=Math.abs(sum-d.total)<0.001;
+    body=`<div class="row" style="align-items:baseline;gap:14px"><div><div class="mu">Nilai total TPKKP</div><div style="font-size:1.6rem;font-weight:700">${Number(d.total).toFixed(4).replace('.',',')}</div></div><div>${chip(d.kategori)}</div><div class="mu">${esc(d.perusahaan||'')}${d.periode?' · '+esc(d.periode):''}${d.cakupan?' · cakupan: '+esc(d.cakupan):''}<br>Diimpor ${esc(tglID((tp.diimpor||'').slice(0,10)))}${d.kelengkapan!=null&&d.kelengkapan<1?' · <span class="warn">input TPKKP belum lengkap ('+Math.round(d.kelengkapan*100)+'%)</span>':''}</div></div>
+    <table><tr><th>No</th><th>Indikator</th><th>Bobot</th><th>Nilai capaian</th><th>Tingkat</th></tr>${d.indikator.map(x=>`<tr><td>${x.no}</td><td>${esc(x.nama)}</td><td>${nf(Number(x.bobot).toFixed(2))}</td><td>${Number(x.nilai).toFixed(4).replace('.',',')}</td><td>${esc(x.kategori)}</td></tr>`).join('')}</table>
+    ${wOk?'':'<p class="warn">Bobot indikator di hasil ini berbeda dari bobot edaran. Periksa web TPKKP.</p>'}${tot?'':'<p class="warn">Jumlah nilai indikator tidak sama dengan nilai total. Impor ulang dari web TPKKP.</p>'}
+    ${/^(Dasar|Reaktif)$/.test(d.kategori||'')?'<p class="warn">Kategori '+esc(d.kategori)+': edaran meminta penilaian ulang pada tahun berikutnya tanpa menunggu 3 tahun.</p>':''}
+    <div class="row"><button class="btn s" onclick="tpkkpClear()">Hapus hasil impor</button></div>`}
+  else body='<p class="mu">Belum ada hasil TPKKP. Di web TPKKP buka tab Hasil, klik "Kirim ke Audit SMKP" untuk menyalin hasilnya, lalu tempel di bawah. Atau unduh berkasnya dan pilih berkas itu di sini.</p>';
+  return `<div class="card"><h2>Penilaian TPKKP</h2>
+  ${t?`<p class="mu" style="margin-top:0">Edaran ${EDR().tahun}: ${esc(t.wajib)}</p>`:`<p class="mu" style="margin-top:0">Edaran ${EDR().tahun} tidak memuat kewajiban penilaian ulang TPKKP. Hasil yang diimpor tetap bisa dilampirkan ke laporan.</p>`}
+  <div class="g2">${F('Tahun penilaian TPKKP menyeluruh terakhir (kosongkan bila belum pernah)','ba','tpkkp.terakhir','n','data-re="1"')}${F('Alamat web TPKKP','ba','tpkkp.url')}</div>
+  ${due?`<p>Batas penilaian ulang: <b>${esc(tglID(due.tgl))}</b> <span class="mu">(${esc(due.cat)}). Laporannya disampaikan paling lambat ${esc(tglID(S.ba.batasLapor))}.</span></p>`:''}
+  ${tp.url&&/^https:\/\//.test(tp.url)?`<p><a href="${esc(tp.url)}" target="_blank" rel="noopener">Buka web TPKKP</a></p>`:''}
+  ${body}
+  <div class="row" style="margin-top:8px;align-items:flex-start"><textarea id="tpIn" rows="2" placeholder="Tempel hasil dari web TPKKP di sini" style="flex:1;min-width:220px"></textarea><div style="display:flex;flex-direction:column;gap:6px"><button class="btn s" onclick="tpkkpPaste()">Impor dari teks</button><label class="btn s" style="cursor:pointer">Pilih berkas .json<input type="file" accept=".json,application/json" style="display:none" onchange="tpkkpFile(this)"></label></div></div></div>`}
 function isiNas(){Object.assign(S.ba.nas,EDR().nas);save('ba');render()}
 function nf(x){return String(x).replace('.',',')}
 function setEdaran(y){S.ba.edaran=y;S.ba.batasLapor=EDR().batasLapor||S.ba.batasLapor;save('ba');render()}
@@ -285,6 +312,7 @@ function tabBA(){syncTim();
   <div><label>Kelas risiko</label><select ${bind('kelas','ba')} data-re="1">${['tinggi','menengah','rendah'].map(o=>`<option value="${o}" ${o==b.kelas?'selected':''}>${o}</option>`).join('')}</select></div></div>
   ${md?`<div class="kpi"><div><b>${md.base}</b><span>Mandays tabel</span></div><div><b>${md.adj}</b><span>Faktor penyesuaian (${faktorPct()}%)</span></div><div><b>${md.total}</b><span>Total mandays</span></div><div><b>${md.tahap1}</b><span>Tahap I (maks 10%)</span></div><div><b>${md.tahap2}</b><span>Tahap II (min 90%)</span></div></div><p class="mu" style="margin:8px 0 0">Faktor penyesuaian: ${effFaktor().some(Boolean)?'+10% (ada faktor tercentang)':'0% (tidak ada faktor tercentang)'}${S.ba.sertifikasi?' dan −10% (sudah audit eksternal pada periode ini)':''} = ${faktorPct()}%.</p>`:'<p class="warn">Jumlah pekerja di luar tabel.</p>'}</div>
 
+  ${tpkkpCard()}
   <div class="card"><h2>II. Hasil permulaan audit &amp; peninjauan dokumen</h2>
   <h3>Daftar auditor</h3><p class="mu" style="margin-top:0">Isi nama dan nomor registrasi sekali di sini. Tim Tahap I dan II tinggal memilih dari daftar ini.</p>${listTable('ba','roster',[{h:'Nama auditor',f:'nama',re:1},{h:'No. registrasi auditor',f:'reg',re:1}],'Auditor',{rid:'',nama:'',reg:''})}<h3>Tim Audit Tahap I</h3>${F('Nomor &amp; tanggal SK pengangkatan tim','ba','skTim')}
   ${timTable('tim1')}
@@ -604,7 +632,7 @@ function lapData(){const d=docData(),b=S.ba,sc=SMKP.skor(MASTER.map(i=>({id:i.id
   d.images=S.lap.images;d.lampiran=['Formulir Penilaian Audit SMKP (File Terpisah)','Rencana Tindak Lanjut Ketidaksesuaian Audit (File Terpisah)','Formulir Kesesuaian SMKP (File Terpisah)','Formulir OFI (File Terpisah)','Formulir Rekapitulasi Ketidaksesuaian SMKP (File Terpisah)','Formulir Ketidaksesuaian dan Tindak Lanjut SMKP (File Terpisah)','Daftar hadir peserta pertemuan pembukaan audit','Daftar hadir peserta pertemuan penutupan audit','Respon pimpinan terhadap pelaksanaan audit'].concat(S.lap.lampiranExtra.map(x=>x.t).filter(Boolean));
   d.rows=[];let last='';MASTER.forEach(it=>{if(it.el!==last){d.rows.push({kind:'el',kode:it.el,nama:ELN[it.el]});last=it.el}const n=S.nilai[it.id]||{},k=kat(it),nc=temuan().find(x=>x.it.id===it.id);
     d.rows.push({kind:'sub',el:it.el,kode:it.id,nama:it.name,max:Number(it.max),nilai:S.plan.na[it.id]?'NA':(n.v===''||n.v==null?'':Number(n.v)),kat:k||'',ket:k==='POSITIF'?kesList().find(x=>x.id===it.id).ket:(n.masalah||''),no:nc?nc.no:''})});
-  d.weights=SMKP.W;return d}
+  d.tpkkp=tpkkpDoc();d.weights=SMKP.W;return d}
 async function exportAny(kind){try{await ensureDoc();const d=lapData();let doc,name;
   if(kind==='L1'){dl(await DocGen.lampiran1(d),'Lampiran 1 - Form Penilaian.xlsx');return}
   if(kind==='L2')[doc,name]=[DocGen.lampiran2(d),'Lampiran 2 - Rencana Tindak Lanjut'];
