@@ -188,8 +188,20 @@ async function load(){
   const m=await Store.mget(keys);
   ks.forEach(k=>{S[k]=Object.assign(JSON.parse(JSON.stringify(DEF[k])),m[K(k)]||{})});
   {const d=DEF.plan.params,pp=S.plan.params||{};S.plan.params=Object.assign({},d,pp,{on:Object.assign({},d.on,pp.on||{}),unit:Object.assign({},d.unit,pp.unit||{})});S.plan.mo=S.plan.mo||{};S.plan.jadwal=S.plan.jadwal||[];S.plan.oa=S.plan.oa||{};S.plan.lib=S.plan.lib||{};S.plan.obj=S.plan.obj||{};S.ba.nas=Object.assign({fr:0,sr:0,asr:0,mfr:0},S.ba.nas||{});if(!S.ba.faktor)S.ba.faktor=[0,0,0,0,0,0,0];S.ba.tpkkp=Object.assign({url:'',terakhir:'',data:null},S.ba.tpkkp||{});S.plan.pel=S.plan.pel||{};{const sv=m[K('ba')]||{};if(!sv.edaran&&window.EDARAN){const y=((S.ba.periode||'').match(/20\d\d/g)||[]).pop();S.ba.edaran=EDARAN.versi[y]?y:EDARAN.terbaru;if(!sv.batasLapor)S.ba.batasLapor=EDARAN.versi[S.ba.edaran].batasLapor}}}
+  await lapLoad().catch(e=>toast('Gambar laporan gagal dimuat: '+e.message));
   const a=m[K('tl_auditi')]||{},v=m[K('tl_verif')]||{};S.tindaklanjut=a;for(const id in v)(S.tindaklanjut[id]=S.tindaklanjut[id]||{}).verif=v[id];
   S._reg=m['connections']||[];S._index=m['index']||[];if(!S._index.find(x=>x.id===Store.cur())){S._index.push({id:Store.cur(),label:'Audit '+Store.cur()});if(Store.role==='admin')await Store.set('index',S._index).catch(()=>{})}}
+const CH=40000;
+function imgId(g){if(!g.id)g.id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);return g.id}
+async function lapSave(){const L=S.lap,core=Object.assign({},L);
+  for(const f of ['images','logos']){core[f]=[];for(const g of (L[f]||[])){const id=imgId(g),n=Math.ceil(g.dataUrl.length/CH);
+    if(!g._s){for(let j=0;j<n;j++)await Store.set(K('im_'+id+'_'+j),g.dataUrl.slice(j*CH,(j+1)*CH));g._s=1}
+    const {dataUrl,_s,...meta}=g;meta.n=n;core[f].push(meta)}}
+  await Store.set(K('lap'),core)}
+async function lapLoad(){const L=S.lap,ks=[];
+  for(const f of ['images','logos'])for(const g of (L[f]||[])){if(g.dataUrl||!g.id)continue;for(let j=0;j<(g.n||1);j++)ks.push(K('im_'+g.id+'_'+j))}
+  const m=ks.length?await Store.mget(ks):{};
+  for(const f of ['images','logos'])L[f]=(L[f]||[]).filter(g=>{if(g.dataUrl){g._s=0;return true}let u='';for(let j=0;j<(g.n||1);j++)u+=m[K('im_'+g.id+'_'+j)]||'';if(!u)return false;g.dataUrl=u;g._s=1;return true})}
 const pend={};
 function isLocked(){const x=(S._index||[]).find(i=>i.id===Store.cur());return !!(x&&x.locked)}
 const dirty={};
@@ -198,6 +210,7 @@ function save(k){if(Store.role==='reader')return;dirty[k]=1;$('#sync').textConte
 async function doSave(k){try{
   if(k==='tindaklanjut'){const a={},v={};for(const id in S.tindaklanjut){const {verif,...r}=S.tindaklanjut[id];a[id]=r;if(verif)v[id]=verif}
     await Store.set(K('tl_auditi'),a);if(Store.role!=='auditee')await Store.set(K('tl_verif'),v)}
+  else if(k==='lap'){if(Store.role!=='auditee'&&!isLocked())await lapSave()}
   else{if(Store.role!=='auditee'&&!isLocked())await Store.set(K(k),S[k])}
   delete dirty[k];if(!Object.keys(dirty).length)$('#sync').textContent='tersimpan '+stamp()+(Store.url()?' (cloud)':' (lokal)')}
   catch(e){$('#sync').textContent='GAGAL simpan';toast('Gagal menyimpan: '+(e.message==='locked'?'audit sudah dikunci':e.message)+'. Perubahan tetap di layar; coba "Simpan sekarang".')}}
