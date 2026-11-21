@@ -503,7 +503,7 @@ function tabPlan(){
   <div class="card"><h2>Metode &amp; sampel per kriteria</h2>
   <div class="row"><button class="btn s" onclick="addAllRecEverywhere()">Tambahkan semua rekomendasi sampel</button><span class="mu">Rekomendasi disusun dari kriteria nilai tertinggi dan tidak masuk dokumen sebelum Anda tambahkan.</span></div><p class="mu">Diturunkan dari kriteria nilai tertinggi setiap sub-elemen. Centang N/A bila tidak berlaku (masuk Pengecualian).</p>
   <table><tr><th style="width:55px">ID</th><th>Sub-elemen / checkpoint</th><th style="width:70px">N/A</th></tr>
-  ${MASTER.map(it=>{const na=pl.na[it.id];return `<tr><td><b>${it.id}</b></td><td><b>${esc(it.name)}</b>${objBadge(it.id)} <span class="mu">(maks ${it.max})</span><details ${na?'':'open'}><summary class="mu">${it.cp.length} checkpoint</summary>${it.cp.map((c,i)=>`<div style="margin:5px 0;padding-left:8px;border-left:3px solid var(--line)">${i+1}. ${esc(cl(c.t))}${detHTML(it,i)}${cpPills(it,i,c,sm,true)}</div>`).join('')}${libHTML(it)}${oaHTML(it,sm)}</details></td><td>${it.na?`<input type="checkbox" style="width:auto" ${na?'checked':''} onchange="S.plan.na['${it.id}']=this.checked?1:0;save('plan')">`:'<span class="mu">–</span>'}</td></tr>`}).join('')}</table></div>`}
+  ${MASTER.map(it=>{const na=pl.na[it.id];return `<tr><td><b>${it.id}</b></td><td><b>${esc(it.name)}</b>${objBadge(it.id)} <span class="mu">(maks ${it.max})</span><details ${na?'':'open'}><summary class="mu">${it.cp.length} checkpoint</summary>${it.cp.map((c,i)=>`<div style="margin:5px 0;padding-left:8px;border-left:3px solid var(--line)">${i+1}. ${esc(cl(c.t))}${detHTML(it,i)}${tpNote(it,i,0)}${cpPills(it,i,c,sm,true)}</div>`).join('')}${libHTML(it)}${oaHTML(it,sm)}</details></td><td>${it.na?`<input type="checkbox" style="width:auto" ${na?'checked':''} onchange="S.plan.na['${it.id}']=this.checked?1:0;save('plan')">`:'<span class="mu">–</span>'}</td></tr>`}).join('')}</table></div>`}
 
 
 // ---------- Penilaian ----------
@@ -515,6 +515,36 @@ function kat(it){const n=S.nilai[it.id];if(S.plan.na[it.id]||!n||n.v===''||n.v==
   if(n.esc==='Kritikal')return 'KRITIKAL';const k=SMKP.kategori(n.v,it.max);if(k==='MINOR'&&(n.esc==='Mayor'||loc30(n)))return 'MAYOR';return k}
 function loc30(n){return Number(n.locTot)>0&&Number(n.locNC)/Number(n.locTot)>0.3}
 function setNil(id,v){NV(id).v=v===''?'':Number(v);save('nilai');render()}
+
+// ---------- Catatan bukti TPKKP pada checkpoint terkait ----------
+const TPK={'II.1#1':'penelaahan','II.4#3':'program','VII.2#1':'rtm'};
+function tpGaps(d){return (d.parameter||[]).filter(x=>x.gap>0).sort((a,b)=>b.gap-a.gap).slice(0,3)}
+function tpKons(d){const b=S.ba,out=[],hi=/^(Proaktif|Resilient)$/.test(d.kategori||'');
+  if(hi){if(Number((b.kinerja||{})['Kecelakaan mati'])>0)out.push('Ada kecelakaan mati pada periode audit, sementara TPKKP berkategori '+d.kategori+'. Uji apakah tingkat yang ditetapkan sesuai dengan kondisi.');
+    Object.keys(KIN).forEach(x=>{const pv=Number((b.kinerja||{})[KIN[x]])||0,nv=Number((b.nas||{})[x])||0;if(nv>0&&pv>nv)out.push(KIN[x]+' perusahaan ('+nf(pv)+') di atas rata-rata nasional ('+nf(nv)+'), sementara TPKKP berkategori '+d.kategori+'.')})}
+  if(d.kelengkapan!=null&&d.kelengkapan<1)out.push('Input penilaian TPKKP belum lengkap ('+Math.round(d.kelengkapan*100)+'%), sehingga nilai total belum final.');
+  return out}
+function tpNote(it,i,fill){const kind=TPK[it.id+'#'+(i+1)];if(!kind)return '';const d=S.ba.tpkkp&&S.ba.tpkkp.data;
+  const judul={penelaahan:'Bukti penelaahan awal: tingkat pencapaian kinerja (TPKKP)',program:'Bukti masukan program: hasil TPKKP',rtm:'Bukti masukan tinjauan manajemen: kemajuan TPKKP'}[kind];
+  const how={penelaahan:'Kepdirjen 185 meminta penelaahan awal menentukan tingkat pencapaian kinerja (dasar, reaktif, terencana, proaktif, resilient). Rubrik sub-elemen II.1: nilai 1 bila tingkat belum ditentukan; nilai 2 bila ditentukan tetapi tidak sesuai kondisi; nilai 3 bila sesuai kondisi tetapi belum sinkron dengan program; nilai 4 bila sinkron dengan program.',
+   program:'Edaran '+EDR().tahun+(EDR().tpkkp?' butir 10d':'')+' meminta hasil TPKKP dijadikan masukan penyusunan program Keselamatan Pertambangan dan program risk-based audit. Periksa TSP dan program tahun berjalan terhadap parameter dengan gap terbesar.',
+   rtm:'Edaran '+EDR().tahun+(EDR().tpkkp?' butir 10d':'')+' meminta kemajuan TPKKP ditinjau dalam Rapat Tinjauan Manajemen oleh pimpinan tertinggi. Periksa MoM tinjauan manajemen memuat hasil dan tindak lanjut TPKKP.'}[kind];
+  let h=`<div class="det"><div class="mu" style="font-size:12.5px"><b>${judul}</b></div><div class="mu" style="font-size:12.5px">${esc(how)}</div>`;
+  if(!d){h+='<div style="margin-top:4px">Belum ada hasil TPKKP di audit ini. Minta dokumen penilaian TPKKP kepada auditi, atau impor hasilnya di Berita Acara, kartu Penilaian TPKKP.</div></div>';return h}
+  const g=tpGaps(d),kons=tpKons(d);
+  h+=`<div style="margin-top:4px">Hasil TPKKP: nilai total <b>${Number(d.total).toFixed(4).replace('.',',')}</b>, kategori <b>${esc(d.kategori)}</b>${d.periode?' (periode '+esc(d.periode)+')':''}${d.cakupan?', cakupan '+esc(d.cakupan):''}.</div>`;
+  if(kind!=='rtm')h+=`<div style="margin-top:2px">Tingkat per indikator: ${(d.indikator||[]).map(x=>esc(x.nama.split(' ').slice(0,3).join(' '))+' <b>'+esc(x.kategori)+'</b>').join('; ')}.</div>`;
+  if(g.length&&kind!=='penelaahan')h+=`<div style="margin-top:2px">Parameter dengan gap terbesar: ${g.map(x=>esc(x.kode+' '+x.nama)+' (gap '+Number(x.gap).toFixed(3).replace('.',',')+')').join('; ')}.</div>`;
+  if(g.length&&kind==='penelaahan')h+=`<div style="margin-top:2px">Uji kesinkronan dengan program: periksa apakah TSP memuat tindakan untuk parameter dengan gap terbesar, yaitu ${g.map(x=>esc(x.kode+' '+x.nama)).join('; ')}.</div>`;
+  if(kind==='penelaahan'){h+=kons.length?`<div style="margin-top:4px"><b>Sinyal untuk uji kesesuaian dengan kondisi:</b><ul>${kons.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'<div style="margin-top:4px" class="mu">Dari data kinerja yang tersedia tidak ada sinyal ketidaksesuaian. Tetap uji bukti penilaian di lapangan.</div>'}
+  else if(kons.some(x=>/belum lengkap/.test(x)))h+=`<div class="warn" style="margin-top:4px">Input penilaian TPKKP belum lengkap.</div>`;
+  if(fill)h+=`<div class="row" style="margin:6px 0 0"><button type="button" class="btn s" onclick="tpFill('${it.id}',${i})">Isi catatan bukti dari hasil TPKKP</button><span class="mu">Menambahkan satu baris sumber ke kolom bukti di bawah. Tambahkan juga hasil pemeriksaan Anda.</span></div>`;
+  return h+'</div>'}
+function tpFill(id,i){const it=MASTER.find(x=>x.id===id),d=S.ba.tpkkp.data;if(!d)return toast('Belum ada hasil TPKKP. Impor di Berita Acara.');const kind=TPK[id+'#'+(i+1)],g=tpGaps(d);
+  const t={penelaahan:'Hasil penilaian TPKKP'+(d.periode?' '+d.periode:'')+': total '+Number(d.total).toFixed(4).replace('.',',')+', kategori '+d.kategori+(d.cakupan?' (cakupan '+d.cakupan+')':'')+'; tingkat per indikator '+d.indikator.map(x=>x.no+'='+x.kategori).join(', '),
+   program:'Hasil penilaian TPKKP sebagai masukan program: kategori '+d.kategori+(g.length?'; parameter gap terbesar '+g.map(x=>x.kode).join(', '):''),
+   rtm:'Hasil penilaian TPKKP (kategori '+d.kategori+', total '+Number(d.total).toFixed(4).replace('.',',')+') untuk ditinjau dalam tinjauan manajemen'}[kind];
+  const n=NV(id),c=(n.cp[i]=n.cp[i]||{st:'',bukti:''});if((c.bukti||'').includes(t))return toast('Catatan sudah ada');c.bukti=(c.bukti?c.bukti.replace(/[;.\s]+$/,'')+'; ':'')+t;save('nilai');render()}
 function setCp(id,i,f,v){const n=NV(id);(n.cp[i]=n.cp[i]||{st:'',bukti:''})[f]=v;save('nilai')}
 function setF(id,f,v){NV(id)[f]=v;save('nilai')}
 let nFilter='all',nQuery='';
@@ -530,7 +560,7 @@ function itemHTML(it){const na=S.plan.na[it.id],n=S.nilai[it.id]||{},k=kat(it),l
   ${na?'<span class="tag NA">N/A – dikeluarkan dari penilaian</span>':`<div class="score" role="group" aria-label="Nilai ${it.id}">${Array.from({length:Number(it.max)+1},(_,v)=>`<button type="button" class="${cur===v?'on '+scCls(v,Number(it.max)):''}" aria-pressed="${cur===v}" onclick="setNil('${it.id}',${cur===v?"''":v})">${v}</button>`).join('')}</div>${k?`<span class="tag ${k}">${k==='POSITIF'?'Sesuai':k[0]+k.slice(1).toLowerCase()}</span>`:''}`}</div>
   ${na?'':`${rub}<details><summary>Checkpoint, bukti, dan rubrik lengkap</summary>
   <p class="mu" style="margin:8px 0 4px">Checkpoint kriteria nilai tertinggi – metode sesuai tabel sampel Rencana Audit.</p>
-  ${it.cp.map((c,i)=>{const r=(n.cp||{})[i]||{};return `<div class="cp">${i+1}. ${esc(cl(c.t))}${detHTML(it,i)}<div>${c.m.map(m=>`<span class="pill ${mActive(it,i,c,m)?'':'off'}" title="${mActive(it,i,c,m)?'diambil':'tidak diambil (ubah di Rencana Audit)'}">${MN[m]}</span>`).join('')}</div>
+  ${it.cp.map((c,i)=>{const r=(n.cp||{})[i]||{};return `<div class="cp">${i+1}. ${esc(cl(c.t))}${detHTML(it,i)}${tpNote(it,i,1)}<div>${c.m.map(m=>`<span class="pill ${mActive(it,i,c,m)?'':'off'}" title="${mActive(it,i,c,m)?'diambil':'tidak diambil (ubah di Rencana Audit)'}">${MN[m]}</span>`).join('')}</div>
    <div class="row" style="margin:6px 0 0"><select style="width:140px" aria-label="Status checkpoint ${i+1}" onchange="setCp('${it.id}',${i},'st',this.value)">${['','Sesuai','Sebagian','Tidak sesuai'].map(o=>`<option ${o==r.st?'selected':''}>${o}</option>`).join('')}</select><input style="flex:1;min-width:220px" placeholder="Bukti: dokumen, rekaman, area, narasumber, dan jumlah sampel" value="${esc(r.bukti)}" oninput="setCp('${it.id}',${i},'bukti',this.value)"></div></div>`}).join('')}
   <div class="g2"><div><label>Masalah (untuk uraian ketidaksesuaian)</label><textarea oninput="setF('${it.id}','masalah',this.value)">${esc(n.masalah)}</textarea></div>
   <div><label>Lokasi dan pelaksana</label><textarea oninput="setF('${it.id}','lokasi',this.value)">${esc(n.lokasi)}</textarea></div>
