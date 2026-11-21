@@ -124,14 +124,14 @@ function laporanIn(d,LM){
   const logoRow=logos.length?[new Table({width:{size:Math.round(9360*WSCALE),type:WidthType.DXA},columnWidths:logos.map(()=>Math.round(9360*WSCALE/logos.length)),alignment:AlignmentType.CENTER,rows:[new TableRow({children:logos.map(g=>new TableCell({borders:NBR,verticalAlign:VerticalAlign.CENTER,width:{size:Math.round(9360*WSCALE/logos.length),type:WidthType.DXA},children:[imgRun(Object.assign({},g,{w:g.w,h:g.h}))]}))})]})]:[];
   const RULE=(sz,bef,aft)=>new Paragraph({spacing:{before:bef,after:aft},border:{bottom:{style:BorderStyle.SINGLE,size:sz,color:'000000',space:1}},children:[]});
   const half=Math.round(9360*WSCALE/2),addr=(t,v)=>new TableCell({borders:NBR,width:{size:half,type:WidthType.DXA},margins:{top:60,bottom:60,left:120,right:120},children:[para(t,{b:true,al:AlignmentType.CENTER,after:60,line:260}),para(v||'-',{al:AlignmentType.CENTER,after:0,line:276})]});
-  const cov=[para('',{after:700,line:240}),
+  const cov=[para('',{after:300,line:240}),
     para('LAPORAN INTERNAL AUDIT',{b:true,al:AlignmentType.CENTER,size:36,after:120,line:276}),
     para('PENERAPAN SISTEM MANAJEMEN KESELAMATAN PERTAMBANGAN MINERAL DAN BATUBARA',{b:true,al:AlignmentType.CENTER,size:26,after:0,line:300}),
-    RULE(18,160,500),
-    ...logoRow,para('',{after:logos.length?500:900,line:240}),
+    RULE(18,160,300),
+    ...logoRow,para('',{after:logos.length?300:700,line:240}),
     para(String(d.company||'').toUpperCase(),{b:true,al:AlignmentType.CENTER,size:34,after:0,line:300}),
     RULE(18,160,0),
-    para('',{after:logos.length?3600:4200,line:240}),
+    para('',{after:logos.length?1500:2400,line:240}),
     para('ALAMAT KANTOR',{b:true,al:AlignmentType.CENTER,after:100,line:276}),
     new Table({width:{size:half*2,type:WidthType.DXA},columnWidths:[half,half],alignment:AlignmentType.CENTER,rows:[new TableRow({children:[addr('HEAD OFFICE',L.kantorPusat),addr('SITE OFFICE',L.alamat)]})]}),
     RULE(6,300,240),
