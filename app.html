@@ -174,7 +174,7 @@ const DEF={
  nilai:{},
  tindaklanjut:{},
  ofi:{items:[]},
- lap:{kantorPusat:'',alamat:'',izin:'',nomorIzin:'',komoditas:'',direktur:'',ktt:'',luas:'',pekerja:'',profilNarasi:'',latar1:'',latar2:'',periodeLaporan:'',kota:'',tglLaporan:'',tglRespon:'',respon1:'',respon2:'',respon3:'',operasional:[],produksi:[],peralatan:[],narasi:{I:'',II:'',III:'',IV:'',V:'',VI:'',VII:''},lampiranExtra:[],images:[]},
+ lap:{abbr:'',kodeWiup:'',jangkaIzin:'',studiKelayakan:'',margin:'std',logos:[],kantorPusat:'',alamat:'',izin:'',nomorIzin:'',komoditas:'',direktur:'',ktt:'',luas:'',pekerja:'',profilNarasi:'',latar1:'',latar2:'',periodeLaporan:'',kota:'',tglLaporan:'',tglRespon:'',respon1:'',respon2:'',respon3:'',operasional:[],produksi:[],peralatan:[],narasi:{I:'',II:'',III:'',IV:'',V:'',VI:'',VII:''},lampiranExtra:[],images:[]},
  plan:{batas:'',obj:{},areas:[],manpower:[],params:{e:0.05,wwcFrac:10,obsCover:30,obsMin:3,periodeTR:'12 bulan terakhir',mode:'standar',fill:1,on:{KS:0,FGD:0,UKUR:0},auditors:2,jam:6,unit:{TD:15,TR:20,WWC:6,OBS:8,KS:180,FGD:90,UKUR:20}},tgl:'',provinsi:'',jadwal:[],na:{},mo:{},oa:{},lib:{}}
 };
 let S={};
@@ -659,7 +659,7 @@ function lapData(){const d=docData(),b=S.ba,sc=SMKP.skor(MASTER.map(i=>({id:i.id
   d.elNames=ELN;d.areas=S.plan.areas;d.pengecualian=MASTER.filter(i=>S.plan.na[i.id]).map(i=>i.id+' '+i.name);
   d.tim=b.tim2.filter(x=>x.nama).map(x=>({nama:x.nama,reg:x.reg,jabatan:/Ketua/.test(x.jabatan)?'Lead Auditor':x.jabatan}));
   d.elSum=Object.keys(ELN).map(e=>{const x=sc.el[e]||{sum:0,max:0,pct:0};return {nama:e+'. '+ELN[e].toUpperCase(),bobot:SMKP.W[e],kontribusi:x.pct,capaian:x.max?x.sum/x.max*100:0}});d.total=sc.total;
-  d.images=S.lap.images;d.lampiran=['Formulir Penilaian Audit SMKP (File Terpisah)','Rencana Tindak Lanjut Ketidaksesuaian Audit (File Terpisah)','Formulir Kesesuaian SMKP (File Terpisah)','Formulir OFI (File Terpisah)','Formulir Rekapitulasi Ketidaksesuaian SMKP (File Terpisah)','Formulir Ketidaksesuaian dan Tindak Lanjut SMKP (File Terpisah)','Daftar hadir peserta pertemuan pembukaan audit','Daftar hadir peserta pertemuan penutupan audit','Respon pimpinan terhadap pelaksanaan audit'].concat(S.lap.lampiranExtra.map(x=>x.t).filter(Boolean));
+  d.images=S.lap.images;d.logos=S.lap.logos||[];d.lampiran=['Formulir Penilaian Audit SMKP (File Terpisah)','Rencana Tindak Lanjut Ketidaksesuaian Audit (File Terpisah)','Formulir Kesesuaian SMKP (File Terpisah)','Formulir OFI (File Terpisah)','Formulir Rekapitulasi Ketidaksesuaian SMKP (File Terpisah)','Formulir Ketidaksesuaian dan Tindak Lanjut SMKP (File Terpisah)','Daftar hadir peserta pertemuan pembukaan audit','Daftar hadir peserta pertemuan penutupan audit','Respon pimpinan terhadap pelaksanaan audit'].concat(S.lap.lampiranExtra.map(x=>x.t).filter(Boolean));
   d.rows=[];let last='';MASTER.forEach(it=>{if(it.el!==last){d.rows.push({kind:'el',kode:it.el,nama:ELN[it.el]});last=it.el}const n=S.nilai[it.id]||{},k=kat(it),nc=temuan().find(x=>x.it.id===it.id);
     d.rows.push({kind:'sub',el:it.el,kode:it.id,nama:it.name,max:Number(it.max),nilai:S.plan.na[it.id]?'NA':(n.v===''||n.v==null?'':Number(n.v)),kat:k||'',ket:k==='POSITIF'?kesList().find(x=>x.id===it.id).ket:(n.masalah||''),no:nc?nc.no:''})});
   d.tpkkp=tpkkpDoc();d.weights=SMKP.W;return d}
@@ -675,11 +675,49 @@ function setL(f,v){S.lap[f]=v;save('lap')}
 function setN(e,v){S.lap.narasi[e]=v;save('lap')}
 function addImg(inp,grup){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const w=Math.min(460,im.width),h=Math.round(im.height*w/im.width);const c=document.createElement('canvas');const sc=Math.min(1,1000/im.width);c.width=im.width*sc;c.height=im.height*sc;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
   S.lap.images.push({grup,judul:f.name.replace(/\.\w+$/,''),dataUrl:c.toDataURL('image/jpeg',0.8),w,h});save('lap');render()};im.src=r.result};r.readAsDataURL(f)}
+
+// ---------- Format laporan: logo dan kepatuhan pedoman ----------
+function addLogo(inp){const f=inp.files[0];inp.value='';if(!f)return;if((S.lap.logos||[]).length>=3)return toast('Maksimal 3 logo.');
+  const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const sc=Math.min(1,500/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    const f2=Math.min(190/c.width,100/c.height);S.lap.logos=S.lap.logos||[];S.lap.logos.push({judul:f.name.replace(/\.\w+$/,''),dataUrl:c.toDataURL('image/png'),w:Math.round(c.width*f2),h:Math.round(c.height*f2)});save('lap');render()};im.onerror=()=>toast('Berkas bukan gambar yang valid.');im.src=r.result};r.readAsDataURL(f)}
+function moveLogo(i,d){const a=S.lap.logos,j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];save('lap');render()}
+function fmtChecks(){const L=S.lap,b=S.ba,d=lapData(),n=(k)=>String(k||'').trim();
+  const nr=L.narasi||{},narOk=Object.keys(ELN).filter(e=>n(nr[e])).length;
+  const I=(ok,t,h)=>({ok:!!ok,t,h:h||''});
+  return [
+   I((L.logos||[]).length,'Logo perusahaan di sampul','Unggah logo di bawah'),
+   I(n(L.kantorPusat)&&n(d.lap.alamat),'Alamat kantor pusat dan site di sampul'),
+   I(n(d.lap.periodeLaporan)||n(b.periode),'Periode dan jadwal pelaksanaan audit'),
+   I(n(L.abbr),'Singkatan perusahaan di Latar Belakang (yang selanjutnya disingkat)'),
+   I(n(L.kodeWiup)&&n(L.nomorIzin)&&n(L.jangkaIzin),'2.1 Domisili dan legalitas: kode WIUP, nomor SK izin, status dan jangka waktu'),
+   I(n(L.studiKelayakan),'2.1 Persetujuan studi kelayakan tambang'),
+   I((L.operasional||[]).length,'2.2 Kegiatan operasional per proses bisnis'),
+   I((L.produksi||[]).length,'2.2 Rencana dan realisasi produksi (OB dan batubara)'),
+   I(n(L.pekerja),'2.2 Jumlah pekerja (organik, kontraktor, labour supply)'),
+   I((L.peralatan||[]).length,'2.2 Daftar jumlah peralatan'),
+   I((L.images||[]).some(x=>x.grup==='struktur'),'Gambar struktur organisasi'),
+   I(narOk===Object.keys(ELN).length,'2.3 Penerapan SMKP: ringkasan tiap elemen ('+narOk+' dari '+Object.keys(ELN).length+' terisi)'),
+   I((S.plan.areas||[]).length,'3 Lingkup audit: daftar area'),
+   I((d.tim||[]).some(t=>/Lead/.test(t.jabatan))&&d.tim.every(t=>n(t.reg)),'4 Tim auditor: Lead Auditor dan nomor registrasi semua auditor'),
+   I(Object.keys(S.nilai).length>0,'5.2 Nilai audit sudah diisi'),
+   I(!EDR().tpkkp||(S.ba.tpkkp&&S.ba.tpkkp.data),'Hasil TPKKP (diminta edaran '+EDR().tahun+')'),
+   I(n(L.kota)&&n(L.tglLaporan),'Kota dan tanggal laporan (halaman penutup)'),
+   I(n(L.ktt)||n(b.ktt),'Nama Kepala Teknik Tambang')]}
+function fmtCard(){const ch=fmtChecks(),ok=ch.filter(x=>x.ok).length;
+  return `<div class="card"><h2>Format dan kelengkapan laporan</h2>
+  <p class="mu" style="margin-top:0">Laporan Word dibuat dalam kertas A4, huruf Arial 12, teks rata kiri-kanan, sesuai pedoman pelaporan audit internal SMKP Minerba dari Ditjen Minerba, dengan nomor halaman "Halaman X | Y" di setiap halaman setelah sampul.</p>
+  <div class="g2"><div><label>Margin halaman</label><select onchange="setL('margin',this.value);render()"><option value="std" ${S.lap.margin!=='sempit'?'selected':''}>Standar: kiri 4 cm, lainnya 3 cm</option><option value="sempit" ${S.lap.margin==='sempit'?'selected':''}>Sempit: 2,54 cm di semua sisi (tabel lebih lega)</option></select></div></div>
+  <h3>Logo sampul</h3><p class="mu" style="margin-top:0">Maksimal 3 logo, tampil sejajar di bawah judul. Gunakan PNG berlatar transparan agar tampak rapi.</p>
+  <div class="row"><label class="btn s" style="cursor:pointer">Tambah logo<input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display:none" onchange="addLogo(this)"></label></div>
+  ${(S.lap.logos||[]).map((g,i)=>`<div class="row"><img src="${g.dataUrl}" style="height:50px;max-width:140px;object-fit:contain;background:#fff;border:1px solid var(--bd,#ccc);padding:2px"><span class="mu" style="flex:1">${esc(g.judul)}</span><button class="btn s" onclick="moveLogo(${i},-1)" aria-label="Geser ke kiri">←</button><button class="btn s" onclick="moveLogo(${i},1)" aria-label="Geser ke kanan">→</button><button class="btn x" onclick="S.lap.logos.splice(${i},1);save('lap');render()" aria-label="Hapus logo">×</button></div>`).join('')}
+  <h3>Cek kelengkapan menurut pedoman <span class="mu">(${ok} dari ${ch.length} terpenuhi)</span></h3>
+  <ul style="list-style:none;padding:0;margin:0">${ch.map(x=>`<li style="margin:3px 0">${x.ok?'<span class="ok">✓</span>':'<span class="warn">✗</span>'} ${esc(x.t)}${!x.ok&&x.h?' <span class="mu">— '+esc(x.h)+'</span>':''}</li>`).join('')}</ul></div>`}
 function tabLap(){const L=S.lap,k=kesList(),ex=(f,l,rows)=>`<label>${l}</label><input value="${esc(L[f])}" oninput="setL('${f}',this.value)">`;
   return `<div class="card"><h2>Unduh dokumen</h2><div class="row"><button class="btn" onclick="exportAny('LAP')">Laporan Audit (Word)</button><button class="btn" onclick="exportAny('L1')">Lampiran 1 (Excel)</button><button class="btn" onclick="exportAny('L2')">Lampiran 2 RTL</button><button class="btn" onclick="exportAny('L3')">Lampiran 3 Kesesuaian</button><button class="btn" onclick="exportAny('L4')">Lampiran 4 OFI</button><button class="btn s" onclick="exportDoc('L5')">Lampiran 5</button><button class="btn s" onclick="exportDoc('L6')">Lampiran 6</button><button class="btn" onclick="exportAll()">Unduh semua</button></div>
   <p class="mu"><b>Penyampaian ke Ditjen Minerba</b> (Edaran ${esc(EDR().nomor)}): laporan, termasuk berita acara Tahap I dan rencana audit Tahap II${EDR().tpkkp?', serta hasil TPKKP':''}, disampaikan paling lambat ${esc(tglID(S.ba.batasLapor)||'batas yang ditetapkan')} (${esc(EDR().dasarLapor||'')}) lewat surat elektronik ke ${esc(EDR().kirim.email||'')}${(EDR().kirim.tembusan||[]).length?', tembusan '+esc(EDR().kirim.tembusan.join(', ')):''}.${EDR().kirim.formulir?` Pengumpulan juga lewat formulir <a href="${esc(EDR().kirim.formulir)}" target="_blank" rel="noopener">${esc(EDR().kirim.formulir.replace('https://',''))}</a>.`:''} Data ini berasal dari file edaran.js; periksa lagi saat edaran baru terbit.</p>
   <p class="mu">Daftar isi laporan berupa field Word: saat dibuka, pilih "Ya" untuk memperbarui field agar nomor halaman muncul.</p></div>
-  <div class="card"><h2>Data profil laporan</h2><div class="g2">${[['kantorPusat','Alamat kantor pusat'],['alamat','Alamat site / domisili'],['izin','Jenis perizinan (jika beda dari Berita Acara)'],['nomorIzin','Nomor izin'],['direktur','Direktur'],['ktt','Kepala Teknik Tambang'],['luas','Luas area konsesi'],['pekerja','Jumlah pekerja (mis. 1743 DP dan mitra)'],['kota','Kota penandatanganan'],['periodeLaporan','Periode yang diaudit'],['tglLaporan','Tanggal laporan'],['tglRespon','Tanggal respon manajemen']].map(([f,l])=>`<div><label>${l}</label><input ${/^tgl/.test(f)?'type="date"':''} value="${esc(L[f])}" oninput="setL('${f}',this.value)"></div>`).join('')}</div>
+  ${fmtCard()}
+  <div class="card"><h2>Data profil laporan</h2><div class="g2">${[['kantorPusat','Alamat kantor pusat'],['alamat','Alamat site / domisili'],['izin','Jenis perizinan (jika beda dari Berita Acara)'],['nomorIzin','Nomor izin'],['direktur','Direktur'],['ktt','Kepala Teknik Tambang'],['kodeWiup','Kode WIUP / WIUPK'],['jangkaIzin','Status dan jangka waktu izin (mis. Operasi Produksi, berlaku s.d. 2041)'],['studiKelayakan','Persetujuan studi kelayakan (nomor dan tanggal)'],['abbr','Singkatan perusahaan (mis. PT DP)'],['luas','Luas area konsesi'],['pekerja','Jumlah pekerja (mis. 1743 DP dan mitra)'],['kota','Kota penandatanganan'],['periodeLaporan','Periode yang diaudit'],['tglLaporan','Tanggal laporan'],['tglRespon','Tanggal respon manajemen']].map(([f,l])=>`<div><label>${l}</label><input ${/^tgl/.test(f)?'type="date"':''} value="${esc(L[f])}" oninput="setL('${f}',this.value)"></div>`).join('')}</div>
   <label>Narasi profil (opsional)</label><textarea oninput="setL('profilNarasi',this.value)">${esc(L.profilNarasi)}</textarea>
   <h3>Kegiatan operasional tambang</h3>${listTable('lap','operasional',[{h:'Kegiatan (dan departemen)',f:'judul'},{h:'Uraian',f:'teks'}],'Kegiatan',{judul:'',teks:''})}
   <h3>Produksi</h3>${listTable('lap','produksi',[{h:'Uraian',f:'u'},{h:'Target',f:'t'},{h:'Pencapaian',f:'p'}],'Baris',{u:'',t:'',p:''})}

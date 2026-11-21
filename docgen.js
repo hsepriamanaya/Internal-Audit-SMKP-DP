@@ -2,7 +2,7 @@
 (function(root){
 const D=typeof require!=='undefined'&&typeof module!=='undefined'?require('docx'):root.docx;
 const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,AlignmentType,BorderStyle,PageBreak,VerticalAlign,ShadingType}=D;
-const FONT='Times New Roman',SZ=24; // 12pt
+let FONT='Times New Roman',WSCALE=1;const SZ=24; // 12pt
 const LETTER={width:12240,height:15840}; // 21.59 x 27.94 cm
 const MARG={top:1440,bottom:1440,left:1440,right:1440}; // 2.54 cm
 const CW=12240-2880; // lebar konten (DXA)
@@ -13,9 +13,9 @@ function para(t,o){o=o||{};const lines=String(t==null?'':t).split('\n');
   return new Paragraph({alignment:o.al||AlignmentType.LEFT,spacing:{after:o.after==null?60:o.after,before:o.before||0},keepNext:o.keepNext,
     children:lines.flatMap((l,i)=>[run(l,{bold:o.b,italics:o.i,size:o.size}),...(i<lines.length-1?[new TextRun({break:1})]:[])])})}
 function cell(content,w,o){o=o||{};const kids=(Array.isArray(content)?content:[content]).map(c=>typeof c==='string'||typeof c==='number'?para(c,{b:o.b,al:o.al}):c);
-  return new TableCell({children:kids,width:{size:w,type:WidthType.DXA},borders:o.nb?NBR:BR,columnSpan:o.span,verticalAlign:o.va||VerticalAlign.TOP,margins:{top:50,bottom:50,left:90,right:90},
+  return new TableCell({children:kids,width:{size:Math.round(w*WSCALE),type:WidthType.DXA},borders:o.nb?NBR:BR,columnSpan:o.span,verticalAlign:o.va||VerticalAlign.TOP,margins:{top:50,bottom:50,left:90,right:90},
     shading:o.fill?{type:ShadingType.CLEAR,fill:o.fill,color:'auto'}:undefined})}
-function table(rows,widths){return new Table({width:{size:widths.reduce((a,b)=>a+b,0),type:WidthType.DXA},columnWidths:widths,rows:rows.map(r=>new TableRow({children:r,cantSplit:true}))})}
+function table(rows,widths){widths=widths.map(x=>Math.round(x*WSCALE));return new Table({width:{size:widths.reduce((a,b)=>a+b,0),type:WidthType.DXA},columnWidths:widths,rows:rows.map(r=>new TableRow({children:r,cantSplit:true}))})}
 function head(txt){return para(txt,{b:true,al:AlignmentType.CENTER,after:200})}
 function kv(k,v){return new Paragraph({spacing:{after:40},tabStops:[{type:'left',position:2700}],children:[run(k,{bold:true}),run('\t: '+(v||''))]})}
 function checkRow(kat){const m={KRITIKAL:'Kritikal',MAYOR:'Major',MINOR:'Minor'};
@@ -102,6 +102,9 @@ async function lampiran1(d,JS){ // d.rows: [{kind:'el'|'sub',kode,nama,max,nilai
 
 
 // ---- Laporan Audit Internal ----
+function tbl(n){const s=['nol','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan','sepuluh','sebelas'];n=Math.floor(n);
+  if(n<12)return s[n];if(n<20)return s[n-10]+' belas';if(n<100)return s[Math.floor(n/10)]+' puluh'+(n%10?' '+s[n%10]:'');if(n<200)return 'seratus'+(n%100?' '+tbl(n%100):'');return tbl(Math.floor(n/100))+' ratus'+(n%100?' '+tbl(n%100):'')}
+function persenKata(x){const f=Number(x).toFixed(2),[i,d]=f.split('.');return f.replace('.',',')+'% ('+tbl(Number(i))+' koma '+d.split('').map(c=>tbl(Number(c))).join(' ')+' persen)'}
 function H1(t){return new Paragraph({heading:D.HeadingLevel.HEADING_1,spacing:{before:240,after:120},keepNext:true,children:[run(t,{bold:true})]})}
 function H2(t){return new Paragraph({heading:D.HeadingLevel.HEADING_2,spacing:{before:160,after:80},keepNext:true,children:[run(t,{bold:true})]})}
 function J(t,o){return para(t,Object.assign({al:AlignmentType.JUSTIFY,after:100},o||{}))}
@@ -111,27 +114,32 @@ function imgRun(im){try{const b64=im.dataUrl.split(',')[1],bin=typeof atob!=='un
 function ncTable(list,startNo){const w=[500,1500,5860,1500];
   const rows=[['No','NOMOR KETIDAKSESUAIAN','DESKRIPSI KETIDAKSESUAIAN','KATEGORI'].map((h,i)=>cell(h,w[i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat(list.map((n,i)=>[cell(startNo+i,w[0],{al:AlignmentType.CENTER}),cell(n.no,w[1]),cell(n.uraian||'',w[2],{}),cell(n.kat,w[3],{al:AlignmentType.CENTER})]));
   return table(rows,w)}
-function laporan(d){
+const A4={width:11906,height:16838};
+function laporan(d){const f0=FONT,w0=WSCALE;try{FONT='Arial';const sempit=(d.lap||{}).margin==='sempit',LM=sempit?{top:1440,bottom:1440,left:1440,right:1440}:{top:1701,bottom:1701,left:2268,right:1701};WSCALE=(A4.width-LM.left-LM.right)/9360;return laporanIn(d,LM)}finally{FONT=f0;WSCALE=w0}}
+function laporanIn(d,LM){
   const kids=[];const L=d.lap||{};
-  // sampul
-  kids.push(para('',{after:1200}),para('LAPORAN INTERNAL AUDIT',{b:true,al:AlignmentType.CENTER,size:32,after:60}),para('PENERAPAN SISTEM MANAJEMEN KESELAMATAN PERTAMBANGAN (SMKP)',{b:true,al:AlignmentType.CENTER,size:28,after:240}),
-    para(d.company||'',{b:true,al:AlignmentType.CENTER,size:28,after:600}),para('ALAMAT KANTOR',{b:true,al:AlignmentType.CENTER}),
-    para('HEAD OFFICE : '+(L.kantorPusat||''),{al:AlignmentType.CENTER}),para('SITE OFFICE : '+(L.alamat||''),{al:AlignmentType.CENTER,after:300}),
-    para('TANGGAL PELAKSANAAN AUDIT: '+(d.tglAudit||''),{b:true,al:AlignmentType.CENTER}),new Paragraph({children:[new PageBreak()]}),
-    para('DAFTAR ISI',{b:true,al:AlignmentType.CENTER,after:160}),new D.TableOfContents('Daftar Isi',{hyperlink:true,headingStyleRange:'1-2'}),new Paragraph({children:[new PageBreak()]}));
+  // sampul (menurut pedoman pelaporan DJMB: judul, logo, nama perusahaan, alamat, jadwal audit)
+  const AB=L.abbr||'';
+  const logos=(d.logos||[]).filter(x=>x&&x.dataUrl);
+  const logoRow=logos.length?[new Table({width:{size:Math.round(9360*WSCALE),type:WidthType.DXA},columnWidths:logos.map(()=>Math.round(9360*WSCALE/logos.length)),alignment:AlignmentType.CENTER,rows:[new TableRow({children:logos.map(g=>new TableCell({borders:NBR,verticalAlign:VerticalAlign.CENTER,width:{size:Math.round(9360*WSCALE/logos.length),type:WidthType.DXA},children:[imgRun(Object.assign({},g,{w:g.w,h:g.h}))]}))})]}),para('',{after:200})]:[para('',{after:300})];
+  const cov=[para('',{after:900}),para('LAPORAN INTERNAL AUDIT',{b:true,al:AlignmentType.CENTER,size:32,after:60}),para('PENERAPAN SISTEM MANAJEMEN KESELAMATAN PERTAMBANGAN MINERAL DAN BATUBARA',{b:true,al:AlignmentType.CENTER,size:28,after:300}),
+    ...logoRow,para(d.company||'',{b:true,al:AlignmentType.CENTER,size:28,after:500}),para('ALAMAT KANTOR',{b:true,al:AlignmentType.CENTER}),
+    para('HEAD OFFICE',{b:true,al:AlignmentType.CENTER,after:0}),para(L.kantorPusat||'',{al:AlignmentType.CENTER,after:120}),para('SITE OFFICE',{b:true,al:AlignmentType.CENTER,after:0}),para(L.alamat||'',{al:AlignmentType.CENTER,after:400}),
+    para('Jadwal Pelaksanaan Audit',{b:true,al:AlignmentType.CENTER,after:0}),para(d.tglAudit||'',{al:AlignmentType.CENTER})];
+  kids.push(para('DAFTAR ISI',{b:true,al:AlignmentType.CENTER,after:160}),new D.TableOfContents('Daftar Isi',{hyperlink:true,headingStyleRange:'1-2'}),new Paragraph({children:[new PageBreak()]}));
   // 1
-  kids.push(H1('1. LATAR BELAKANG'),J(L.latar1||'Audit internal SMKP ini merupakan bagian dari penerapan Elemen-elemen SMKP Minerba, sesuai dengan ketentuan Peraturan Menteri Energi dan Sumber Daya Mineral Nomor 26 Tahun 2018 dan Keputusan Direktur Jenderal Mineral dan Batubara Nomor 185.K/37.04/DJB/2019 Lampiran II.'),
-    J(L.latar2||('Audit internal SMKP ini bertujuan untuk mendapatkan gambaran tingkat penerapan SMKP di '+d.company+' dalam periode '+(L.periodeLaporan||'')+'.')));
+  kids.push(H1('1. LATAR BELAKANG'),J(L.latar1||'Audit SMKP Minerba ini merupakan bagian dari penerapan Elemen SMKP Minerba sesuai dengan ketentuan dalam Peraturan Menteri Energi dan Sumber Daya Mineral Nomor 26 Tahun 2018, Keputusan Menteri Energi dan Sumber Daya Mineral Nomor 1827.K/30/MEM/2018 Lampiran IV, serta Keputusan Direktur Jenderal Mineral dan Batubara Nomor 185.K/37.04/DJB/2019 tentang Petunjuk Teknis Pelaksanaan Keselamatan Pertambangan dan Pelaksanaan, Penilaian, dan Pelaporan Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara.'),
+    J(L.latar2||('Audit SMKP Minerba ini bertujuan untuk mendapatkan gambaran tingkat penerapan SMKP Minerba di '+d.company+(AB?', yang selanjutnya disingkat '+AB+',':'')+' sejak periode '+(L.periodeLaporan||'')+'.')));
   // 2
   kids.push(H1('2. GAMBARAN UMUM PERUSAHAAN'),H2('2.1 Data Profil Perusahaan'));
-  const pf=[['Nama Perusahaan',d.company],['Alamat Kantor Pusat',L.kantorPusat],['Alamat Domisili Perusahaan',L.alamat],['Jenis Perizinan',L.izin],['Nomor Izin',L.nomorIzin],['Jenis Komoditas Tambang',L.komoditas],['Direktur',L.direktur],['KTT',L.ktt],['Luas Area Konsesi',L.luas],['Jumlah Pekerja',L.pekerja]];
+  const pf=[['Nama Perusahaan',d.company],['Alamat Kantor Pusat',L.kantorPusat],['Alamat Domisili Perusahaan',L.alamat],['Jenis Perizinan',L.izin],['Nomor Izin',L.nomorIzin],['Jenis Komoditas Tambang',L.komoditas],['Direktur',L.direktur],['KTT',L.ktt],['Kode WIUP / WIUPK',L.kodeWiup],['Status dan Jangka Waktu Izin',L.jangkaIzin],['Persetujuan Studi Kelayakan',L.studiKelayakan],['Luas Area Konsesi',L.luas],['Jumlah Pekerja',L.pekerja]].filter(r=>r[1]||['Nama Perusahaan','Alamat Kantor Pusat','Alamat Domisili Perusahaan','Jenis Perizinan','Nomor Izin','Jenis Komoditas Tambang','Direktur','KTT','Luas Area Konsesi','Jumlah Pekerja'].includes(r[0]));
   kids.push(table(pf.map(r=>[cell(r[0],3000,{b:true}),cell(r[1]||'',6360)]),[3000,6360]));
   if(L.profilNarasi)kids.push(J(L.profilNarasi,{before:80}));
   kids.push(H2('2.2 Kegiatan Operasional Tambang'));
   (L.operasional||[]).forEach(o=>{kids.push(para(o.judul,{b:true,before:60,keepNext:true}),J(o.teks||''))});
-  if((L.produksi||[]).length){kids.push(para('Target produksi tahun berjalan:',{before:80}),table([['No','Target Produksi','Pencapaian'].map((h,i)=>cell(h,[600,4380,4380][i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat(L.produksi.map((r,i)=>[cell(i+1,600),cell(r.u+' : '+r.t,4380),cell(r.p,4380)])),[600,4380,4380]))}
-  if((L.peralatan||[]).length){kids.push(para('Sarana, prasarana, instalasi, dan peralatan:',{before:100}),table([['No','Jenis','Informasi / PT','Kontraktor','Jumlah'].map((h,i)=>cell(h,[600,3600,1900,1900,1360][i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat(L.peralatan.map((r,i)=>[cell(i+1,600),cell(r.jenis,3600),cell(r.pt,1900),cell(r.kontraktor,1900),cell((Number(r.pt)||0)+(Number(r.kontraktor)||0),1360)])),[600,3600,1900,1900,1360]))}
-  kids.push(H2('2.3 Struktur Organisasi '+d.company));(d.images||[]).filter(i=>i.grup==='struktur').forEach(i=>kids.push(imgRun(i)));
+  if((L.produksi||[]).length){kids.push(para('Tabel 1 Target dan pencapaian produksi '+d.company,{b:true,before:80,keepNext:true}),table([['No','Target Produksi','Pencapaian'].map((h,i)=>cell(h,[600,4380,4380][i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat(L.produksi.map((r,i)=>[cell(i+1,600),cell(r.u+' : '+r.t,4380),cell(r.p,4380)])),[600,4380,4380]))}
+  if((L.peralatan||[]).length){kids.push(para('Tabel '+((L.produksi||[]).length?2:1)+' Daftar sarana, prasarana, instalasi, dan peralatan '+d.company,{b:true,before:100,keepNext:true}),table([['No','Jenis','Informasi / PT','Kontraktor','Jumlah'].map((h,i)=>cell(h,[600,3600,1900,1900,1360][i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat(L.peralatan.map((r,i)=>[cell(i+1,600),cell(r.jenis,3600),cell(r.pt,1900),cell(r.kontraktor,1900),cell((Number(r.pt)||0)+(Number(r.kontraktor)||0),1360)])),[600,3600,1900,1900,1360]))}
+  kids.push(H2('2.3 Struktur Organisasi '+d.company));(d.images||[]).filter(i=>i.grup==='struktur').forEach(i=>kids.push(imgRun(i),para('Gambar 1 Struktur Organisasi '+d.company,{al:AlignmentType.CENTER,i:true,after:120})));
   kids.push(H2('2.4 Penerapan SMKP Minerba'));
   const EL=d.elNames;Object.keys(EL).forEach(e=>{kids.push(para('Elemen '+e+' '+EL[e],{b:true,before:60,keepNext:true}));(L.narasi&&L.narasi[e]?String(L.narasi[e]).split('\n').filter(Boolean):['(belum diisi)']).forEach(t=>kids.push(bl(t)))});
   // 3
@@ -150,7 +158,7 @@ function laporan(d){
   kids.push(kr.length?table(kr,[2000,7360]):para('(belum ada temuan positif)'));
   kids.push(para('Ringkasan Temuan Audit Ketidaksesuaian',{b:true,before:160,keepNext:true}),J('Selama pelaksanaan audit internal SMKP di '+d.company+', tim auditor telah menemukan ketidaksesuaian terhadap persyaratan elemen SMKP sebagai berikut:'));
   let no=1;[['KRITIKAL','Kritikal'],['MAYOR','Mayor'],['MINOR','Minor']].forEach(([k,lbl])=>{const l=(d.ncs||[]).filter(n=>n.kat===k);kids.push(para('Kategori '+lbl,{b:true,before:100,keepNext:true}),para('Jumlah : Terdapat '+l.length+' temuan ketidaksesuaian dengan kategori '+lbl),para('Uraian :'));if(l.length){kids.push(ncTable(l,no));no+=l.length}});
-  kids.push(H2('5.2 Tingkat Pencapaian Penerapan SMKP Minerba'));
+  kids.push(H2('5.2 Tingkat Pencapaian Penerapan SMKP Minerba'),J('Selanjutnya, berdasarkan Petunjuk Teknis SMKP Minerba sebagaimana dimaksud, maka tingkat pencapaian penerapan SMKP Minerba di '+d.company+' adalah '+persenKata(d.total)+'.'));
   const w=[600,4260,1400,1550,1550];kids.push(table([['No','ELEMEN','BOBOT','NILAI AUDIT','CAPAIAN'].map((h,i)=>cell(h,w[i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat((d.elSum||[]).map((r,i)=>[cell(i+1,w[0],{al:AlignmentType.CENTER}),cell(r.nama,w[1]),cell(r.bobot+'%',w[2],{al:AlignmentType.CENTER}),cell(r.kontribusi.toFixed(2)+'%',w[3],{al:AlignmentType.CENTER}),cell(r.capaian.toFixed(2)+'%',w[4],{al:AlignmentType.CENTER})])).concat([[cell('TOTAL',w[0]+w[1],{b:true,span:2}),cell('100%',w[2],{b:true,al:AlignmentType.CENTER}),cell(d.total.toFixed(2)+'%',w[3],{b:true,al:AlignmentType.CENTER}),cell(d.total.toFixed(2)+'%',w[4],{b:true,al:AlignmentType.CENTER})]]),w));
   if(d.tpkkp){const T=d.tpkkp,wt=[600,4260,1100,1700,1700];kids.push(H2('5.3 Hasil Penilaian Tingkat Pencapaian Kinerja Keselamatan Pertambangan (TPKKP)'),J('Penilaian TPKKP '+(T.perusahaan||d.company)+(T.periode?' periode '+T.periode:'')+(T.cakupan?' (cakupan: '+T.cakupan+')':'')+' menghasilkan nilai total '+T.total.toFixed(4).replace('.',',')+' dengan kategori '+T.kategori+'.'));
     kids.push(table([['No','INDIKATOR','BOBOT','NILAI CAPAIAN','TINGKAT'].map((h,i)=>cell(h,wt[i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat(T.indikator.map(r=>[cell(r.no,wt[0],{al:AlignmentType.CENTER}),cell(r.nama,wt[1]),cell(Number(r.bobot).toFixed(2).replace('.',','),wt[2],{al:AlignmentType.CENTER}),cell(Number(r.nilai).toFixed(4).replace('.',','),wt[3],{al:AlignmentType.CENTER}),cell(r.kategori,wt[4],{al:AlignmentType.CENTER})])).concat([[cell('',wt[0]),cell('Nilai total',wt[1],{b:true}),cell('1,00',wt[2],{al:AlignmentType.CENTER,b:true}),cell(T.total.toFixed(4).replace('.',','),wt[3],{al:AlignmentType.CENTER,b:true}),cell(T.kategori,wt[4],{al:AlignmentType.CENTER,b:true})]]),wt));
@@ -158,9 +166,9 @@ function laporan(d){
   // 6
   kids.push(H1('6. LAMPIRAN-LAMPIRAN'));(d.lampiran||[]).forEach((x,i)=>kids.push(para((i+1)+'. '+x,{after:30})));
   // 7
-  kids.push(H1('7. HALAMAN PENUTUP'),para((L.kota||'')+', '+fmtTgl(L.tglLaporan),{before:100}),para('Dibuat oleh:',{before:80}));
-  (d.tim||[]).forEach((t,i)=>kids.push(para((i+1)+'. '+(t.jabatan||'Auditor')+' : '+t.nama+(t.reg?' (No. Reg : '+t.reg+')':''),{after:40})));
-  kids.push(para('Diketahui oleh,',{before:160}),para('',{after:600}),para(L.ktt||'',{b:true,after:0}),para('Kepala Teknik Tambang'));
+  kids.push(H1('7. HALAMAN PENUTUP'),para((L.kota||'')+', '+fmtTgl(L.tglLaporan),{before:100,after:80}),para('Dibuat oleh,',{after:20}),para('TIM AUDITOR INTERNAL '+String(d.company||'').toUpperCase()+':',{b:true,after:100}));
+  {const wp=[600,2100,3260,3400];kids.push(table([['No','Jabatan','Nama (No. Registrasi)','Tanda Tangan'].map((h,i)=>cell(h,wp[i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat((d.tim||[]).map((t,i)=>[cell(i+1,wp[0],{al:AlignmentType.CENTER}),cell(t.jabatan||'Auditor',wp[1]),cell(t.nama+(t.reg?' (No. Reg : '+t.reg+')':''),wp[2]),cell([para('',{after:500})],wp[3])])),wp))}
+  kids.push(para('Diketahui oleh,',{before:200,after:0}),para('',{after:600}),para(L.ktt||'',{b:true,after:0}),para('Kepala Teknik Tambang'));
   const dok=(d.images||[]).filter(i=>i.grup==='dok');if(dok.length){kids.push(new Paragraph({children:[new PageBreak()]}));dok.forEach(i=>{kids.push(para(i.judul||'',{b:true,al:AlignmentType.CENTER}),imgRun(i))})}
   kids.push(new Paragraph({children:[new PageBreak()]}),para('RESPON MANAJEMEN TERHADAP PELAKSANAAN AUDIT',{b:true,al:AlignmentType.CENTER,after:160}),
     J('Sehubungan dengan selesainya kegiatan audit internal Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara yang dilaksanakan terhadap '+d.company+' pada tanggal '+(d.tglAudit||'')+':'),
@@ -169,7 +177,9 @@ function laporan(d){
     ...(L.respon2?[bl(L.respon2)]:[]),J(L.respon3||'Kami akan mendukung sepenuhnya proses tindak lanjut dan perbaikan berdasarkan hasil audit internal SMKP ini.',{before:80}),
     para((L.kota||'')+', '+fmtTgl(L.tglRespon||L.tglLaporan),{before:160}),para('',{after:600}),para(L.ktt||'',{b:true,after:0}),para('Kepala Teknik Tambang'));
   const heads={heading1:{run:{font:FONT,size:SZ,bold:true,color:'000000'}},heading2:{run:{font:FONT,size:SZ,bold:true,color:'000000'}}};
-  return new Document({features:{updateFields:true},styles:{default:{document:{run:{font:FONT,size:SZ}},heading1:heads.heading1,heading2:heads.heading2}},sections:[{properties:{page:{size:LETTER,margin:MARG}},children:kids}]})}
+  const ft=new D.Footer({children:[new Paragraph({alignment:AlignmentType.RIGHT,border:{top:{style:BorderStyle.SINGLE,size:6,color:'000000',space:4}},children:[run('Halaman ',{size:20}),new TextRun({children:[D.PageNumber.CURRENT],font:FONT,size:20}),run(' | ',{size:20}),new TextRun({children:[D.PageNumber.TOTAL_PAGES],font:FONT,size:20})]})]});
+  const pg={size:A4,margin:LM,};
+  return new Document({features:{updateFields:true},styles:{default:{document:{run:{font:FONT,size:SZ}},heading1:heads.heading1,heading2:heads.heading2}},sections:[{properties:{page:pg},children:cov},{properties:{page:pg},footers:{default:ft},children:kids}]})}
 
 async function toBlob(doc){return Packer.toBlob(doc)}
 async function toBuffer(doc){return Packer.toBuffer(doc)}
