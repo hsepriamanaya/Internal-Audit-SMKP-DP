@@ -74,7 +74,7 @@ function lampiran4(d){const w=[3000,6360],rows=[];
 // ---- Lampiran 1: Excel minimal via JSZip ----
 function xe(v){return String(v==null?'':v).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
 function colL(n){let s='';n++;while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s}
-async function lampiran1(d,JS){ // d.rows: [{kind:'el'|'sub',kode,nama,max,nilai,kat,ket,no,w}] d.weights
+async function lampiran1Basic(d,JS){ // d.rows: [{kind:'el'|'sub',kode,nama,max,nilai,kat,ket,no,w}] d.weights
   const Z=JS||(typeof JSZip!=='undefined'?JSZip:require('jszip')),z=new Z();
   const hdr=['Kriteria','Kode','Sub Elemen','Nilai Maks','Nilai Audit','Kategori','Keterangan','No Temuan'];
   let rows=[[{s:d.company}],[{s:'FORMULIR KRITERIA AUDIT SMKP MINERBA'}],[{s:d.tglAudit}],[],hdr.map(h=>({s:h,b:1}))];
@@ -100,6 +100,29 @@ async function lampiran1(d,JS){ // d.rows: [{kind:'el'|'sub',kode,nama,max,nilai
   z.file('xl/worksheets/sheet1.xml','<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols><col min="1" max="1" width="10"/><col min="2" max="2" width="10"/><col min="3" max="3" width="45"/><col min="4" max="5" width="12"/><col min="6" max="6" width="12"/><col min="7" max="7" width="60"/><col min="8" max="8" width="14"/></cols><sheetData>'+sheetRows+'</sheetData></worksheet>');
   return z.generateAsync({type:typeof Blob!=='undefined'?'blob':'nodebuffer'})}
 
+
+
+// Lampiran 1 mengikuti format "Form Penilaian Kriteria Audit" (templat form1_tpl.js)
+async function lampiran1(d,JS){
+  const G=typeof window!=='undefined'?window:globalThis,T=G.FORM1_TPL;if(!T)return lampiran1Basic(d,JS);
+  const Z=JS||(typeof JSZip!=='undefined'?JSZip:require('jszip')),z=await Z.loadAsync(T.b64,{base64:true});
+  let xml=await z.file('xl/worksheets/sheet1.xml').async('string');
+  const set=(ref,val)=>{const re=new RegExp('<c r="'+ref+'"(?: s="(\\d+)")?(?: t="\\w+")?(?:\\s*/>|>[\\s\\S]*?</c>)');
+    xml=xml.replace(re,(m,st)=>{const a=st?' s="'+st+'"':'';if(val==null||val==='')return '<c r="'+ref+'"'+a+'/>';
+      return typeof val==='number'?'<c r="'+ref+'"'+a+'><v>'+val+'</v></c>':'<c r="'+ref+'"'+a+' t="inlineStr"><is><t xml:space="preserve">'+xe(val)+'</t></is></c>'})};
+  const hgt=(r,n)=>{const re=new RegExp('<row r="'+r+'"([^>]*)>');xml=xml.replace(re,(m,at)=>{const cur=/ ht="([\d.]+)"/.exec(at);const h=n;return '<row r="'+r+'"'+at.replace(/ ht="[\d.]+"/,'').replace(/ customHeight="\d"/,'')+' ht="'+h+'" customHeight="1">'})};
+  const byId={};d.rows.forEach(x=>{if(x.kind==='sub')byId[x.kode]=x});
+  const mp=T.map;
+  mp.rows.forEach(m=>{const x=byId[m.id];if(!x)return;const na=x.nilai==='NA',vc=m.k==='ss'?'J':'I',mc=m.k==='ss'?'H':'G';
+    set(vc+m.r,na?'N/A':(x.nilai===''||x.nilai==null?null:Number(x.nilai)));if(na)set(mc+m.r,'N/A');
+    let lab=x.kat||'';if(m.k==='ss'&&x.agg)lab='NC-MY';
+    set('M'+m.r,lab);set('N'+m.r,x.ket||'');set('O'+m.r,x.no||'');
+    const n=String(x.ket||'').split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/88)),0);hgt(m.r,Math.min(409,Math.max(m.k==='ss'?34:46.5,n*15.5+8)))});
+  mp.parents.forEach(p=>{const kids=mp.rows.filter(m=>m.p===p.code).map(m=>byId[m.id]).filter(Boolean),my=kids.find(x=>x.agg);
+    set('O'+p.r,my?my.no:'')});
+  xml=xml.replace('@@CO@@',xe(String(d.company||'').toUpperCase()));
+  z.file('xl/worksheets/sheet1.xml',xml);
+  return z.generateAsync({type:typeof Blob!=='undefined'?'blob':'nodebuffer',compression:'DEFLATE'})}
 
 // ---- Laporan Audit Internal ----
 function tbl(n){const s=['nol','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan','sepuluh','sebelas'];n=Math.floor(n);
