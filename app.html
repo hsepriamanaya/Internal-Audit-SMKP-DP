@@ -525,7 +525,13 @@ let curEl='I';
 function NV(id){return S.nilai[id]||(S.nilai[id]={v:'',cp:{},masalah:'',lokasi:'',ref:'',esc:'',ket:''})}
 function nilaiMap(){const o={};MASTER.forEach(it=>{const n=S.nilai[it.id];o[it.id]=S.plan.na[it.id]?'NA':(n&&n.v!==''&&n.v!=null?Number(n.v):null)});return o}
 function kat(it){const n=S.nilai[it.id];if(S.plan.na[it.id]||!n||n.v===''||n.v==null)return null;
-  if(n.esc==='Kritikal')return 'KRITIKAL';const k=SMKP.kategori(n.v,it.max);if(k==='MINOR'&&(n.esc==='Mayor'||loc30(n)))return 'MAYOR';return k}
+  if(n.esc==='Kritikal')return 'KRITIKAL';let k=SMKP.kategori(n.v,it.max);
+  if(k==='MAYOR'||k==='MINOR'){const g=subAgg(it);k=g<50?'MAYOR':'MINOR'}
+  if(k==='MINOR'&&(n.esc==='Mayor'||loc30(n)))return 'MAYOR';return k}
+// persentase nilai satu sub elemen (gabungan seluruh sub-sub elemennya yang dinilai); kurang dari 50% = Mayor
+function subAgg(it){const key=it.id.split('.').slice(0,2).join('.');let v=0,m=0;
+  MASTER.forEach(i=>{if(i.el!==it.el||i.id.split('.').slice(0,2).join('.')!==key||S.plan.na[i.id])return;const n=S.nilai[i.id];if(!n||n.v===''||n.v==null)return;v+=Number(n.v);m+=Number(i.max)});
+  return m?v/m*100:100}
 function loc30(n){return Number(n.locTot)>0&&Number(n.locNC)/Number(n.locTot)>0.3}
 function setNil(id,v){NV(id).v=v===''?'':Number(v);save('nilai');render()}
 
@@ -599,7 +605,9 @@ function temuan(){
   const L=[];MASTER.forEach(it=>{const k=kat(it);if(k&&k!=='POSITIF')L.push({it,k,n:S.nilai[it.id]})});
   const pre={KRITIKAL:'NC-KT',MAYOR:'NC-MY',MINOR:'NC-MN'},cnt={};
   L.sort((a,b)=>['KRITIKAL','MAYOR','MINOR'].indexOf(a.k)-['KRITIKAL','MAYOR','MINOR'].indexOf(b.k)||MASTER.indexOf(a.it)-MASTER.indexOf(b.it));
-  L.forEach(x=>{cnt[x.k]=(cnt[x.k]||0)+1;x.no=pre[x.k]+'-'+String(cnt[x.k]).padStart(2,'0');x.txt=uraian(x)});return L}
+  const myNo={};L.forEach(x=>{const sub=x.it.id.split('.').slice(0,2).join('.');
+    if(x.k==='MAYOR'){if(!(sub in myNo))myNo[sub]=cnt.MAYOR_N=(cnt.MAYOR_N||0)+1;x.cnt=myNo[sub]}else{cnt[x.k]=(cnt[x.k]||0)+1;x.cnt=cnt[x.k]}
+    x.no=pre[x.k]+'-'+String(x.cnt).padStart(2,'0');x.txt=uraian(x)});return L}
 function uraian(x){const n=x.n,it=x.it;
   const ev=it.cp.map((c,i)=>{const r=(n.cp||{})[i];return r&&r.bukti?r.bukti:null}).filter(Boolean);
   const nc=it.cp.map((c,i)=>(n.cp||{})[i]&&['Tidak sesuai','Sebagian'].includes(n.cp[i].st)?c.t:null).filter(Boolean);
@@ -673,7 +681,7 @@ function lapData(){const d=docData(),b=S.ba,sc=SMKP.skor(MASTER.map(i=>({id:i.id
   d.elNames=ELN;d.areas=S.plan.areas;d.pengecualian=MASTER.filter(i=>S.plan.na[i.id]).map(i=>i.id+' '+i.name);
   d.tim=b.tim2.filter(x=>x.nama).map(x=>({nama:x.nama,reg:x.reg,jabatan:/Ketua/.test(x.jabatan)?'Lead Auditor':x.jabatan}));
   d.elSum=Object.keys(ELN).map(e=>{const x=sc.el[e]||{sum:0,max:0,pct:0};return {nama:e+'. '+ELN[e].toUpperCase(),bobot:SMKP.W[e],kontribusi:x.pct,capaian:x.max?x.sum/x.max*100:0}});d.total=sc.total;
-  d.images=S.lap.images;d.logos=S.lap.logos||[];d.lampiran=['Formulir Penilaian Audit SMKP (File Terpisah)','Rencana Tindak Lanjut Ketidaksesuaian Audit (File Terpisah)','Formulir Kesesuaian SMKP (File Terpisah)','Formulir OFI (File Terpisah)','Formulir Rekapitulasi Ketidaksesuaian SMKP (File Terpisah)','Formulir Ketidaksesuaian dan Tindak Lanjut SMKP (File Terpisah)','Daftar hadir peserta pertemuan pembukaan audit','Daftar hadir peserta pertemuan penutupan audit','Respon pimpinan terhadap pelaksanaan audit'].concat(S.lap.lampiranExtra.map(x=>x.t).filter(Boolean));
+  d.images=S.lap.images;d.logos=S.lap.logos||[];d.lampiran=['Formulir Penilaian Audit SMKP '+(S.ba.auditi||'')+' (File Terpisah)','Rencana Tindak Lanjut Ketidaksesuaian Audit (File Terpisah)','Formulir Kesesuaian SMKP (File Terpisah)','Formulir OFI (File Terpisah)','Formulir Rekapitulasi Ketidaksesuaian SMKP (File Terpisah)','Formulir Ketidaksesuaian dan Tindak Lanjut SMKP (File Terpisah)','Daftar hadir peserta pertemuan pembukaan audit','Daftar hadir peserta pertemuan penutupan audit','Respon pimpinan '+(S.ba.auditi||'')+' terhadap pelaksanaan audit'].concat(S.lap.lampiranExtra.map(x=>x.t).filter(Boolean));
   d.rows=[];let last='';MASTER.forEach(it=>{if(it.el!==last){d.rows.push({kind:'el',kode:it.el,nama:ELN[it.el]});last=it.el}const n=S.nilai[it.id]||{},k=kat(it),nc=temuan().find(x=>x.it.id===it.id);
     d.rows.push({kind:'sub',el:it.el,kode:it.id,nama:it.name,max:Number(it.max),nilai:S.plan.na[it.id]?'NA':(n.v===''||n.v==null?'':Number(n.v)),kat:k||'',ket:k==='POSITIF'?kesList().find(x=>x.id===it.id).ket:(n.masalah||''),no:nc?nc.no:''})});
   d.tpkkp=tpkkpDoc();d.weights=SMKP.W;
@@ -688,13 +696,13 @@ async function exportAny(kind){try{await ensureDoc();const d=lapData();let doc,n
 async function exportAll(){for(const k of ['LAP','L1','L2','L3','L4']){await exportAny(k);await new Promise(r=>setTimeout(r,500))}await exportDoc('L5');await new Promise(r=>setTimeout(r,500));await exportDoc('L6')}
 function setL(f,v){S.lap[f]=v;save('lap')}
 function setN(e,v){S.lap.narasi[e]=v;save('lap')}
-function addImg(inp,grup){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const w=Math.min(460,im.width),h=Math.round(im.height*w/im.width);const c=document.createElement('canvas');const sc=Math.min(1,1000/im.width);c.width=im.width*sc;c.height=im.height*sc;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+function addImg(inp,grup){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const w=Math.min(460,im.width),h=Math.round(im.height*w/im.width);const c=document.createElement('canvas');const sc=Math.min(1,(grup==='struktur'?1800:1000)/im.width);c.width=im.width*sc;c.height=im.height*sc;c.getContext('2d').drawImage(im,0,0,c.width,c.height);
   S.lap.images.push({grup,judul:f.name.replace(/\.\w+$/,''),dataUrl:c.toDataURL('image/jpeg',0.8),w,h});save('lap');render()};im.src=r.result};r.readAsDataURL(f)}
 
 // ---------- Format laporan: logo dan kepatuhan pedoman ----------
 function addLogo(inp){const f=inp.files[0];inp.value='';if(!f)return;if((S.lap.logos||[]).length>=3)return toast('Maksimal 3 logo.');
   const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const sc=Math.min(1,500/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
-    const f2=Math.min(190/c.width,100/c.height);S.lap.logos=S.lap.logos||[];S.lap.logos.push({judul:f.name.replace(/\.\w+$/,''),dataUrl:c.toDataURL('image/png'),w:Math.round(c.width*f2),h:Math.round(c.height*f2)});save('lap');render()};im.onerror=()=>toast('Berkas bukan gambar yang valid.');im.src=r.result};r.readAsDataURL(f)}
+    const f2=Math.min(330/c.width,150/c.height);S.lap.logos=S.lap.logos||[];S.lap.logos.push({judul:f.name.replace(/\.\w+$/,''),dataUrl:c.toDataURL('image/png'),w:Math.round(c.width*f2),h:Math.round(c.height*f2)});save('lap');render()};im.onerror=()=>toast('Berkas bukan gambar yang valid.');im.src=r.result};r.readAsDataURL(f)}
 function moveLogo(i,d){const a=S.lap.logos,j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];save('lap');render()}
 function fmtChecks(){const L=S.lap,b=S.ba,d=lapData(),n=(k)=>String(k||'').trim();
   const nr=L.narasi||{},narOk=Object.keys(ELN).filter(e=>n(nr[e])).length;
@@ -738,18 +746,32 @@ const GRP=[['I','I.','Penetapan, isi, komunikasi, dan tinjauan kebijakan keselam
  ['V','V.1','Pemantauan dan pengukuran kinerja'],['V','V.2,V.3,V.4','Inspeksi, evaluasi kepatuhan, dan penyelidikan kecelakaan'],['V','V.5,V.6,V.7','Pelaporan, audit internal, dan rencana tindak lanjut'],
  ['VI','VI.','Manual SMKP serta pengendalian dokumen dan rekaman'],['VII','VII.','Tinjauan manajemen dan peningkatan kinerja']];
 function narasiAuto(e){
-  const sh=(t,n)=>{t=String(t||'').replace(/\s+/g,' ').trim();return t.length>n?t.slice(0,n-1).replace(/\s+\S*$/,'')+'…':t};
+  const sh=(t,n)=>{t=String(t||'').replace(/\s+/g,' ').trim();if(t.length<=n)return t;t=t.slice(0,n).replace(/\s+\S*$/,'').replace(/[\s,;:(\-–]+$/,'').replace(/\([^)]*$/,'').trim();t=t.replace(/\s+(dan|yang|atau|pada|dengan|untuk|di|secara|serta|dalam|sesuai|oleh|kepada|dari)$/i,'');return t+' …'};
   const lc=t=>t.charAt(0).toLowerCase()+t.slice(1);
+  const PHN=S.ba.auditi||'PH',esc2=PHN.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const VERB=/^(me|mem|men|meng|meny|di|ber|ter|ada\b|memiliki|miliki)/i;
+  const cc=t=>{t=cl(t).replace(/_x[0-9a-fA-F]{4}_/g,'-').replace(/\bpH\b/g,'PH').replace(new RegExp('\\b'+esc2+'\\b','g'),'PH').replace(/PH\s+untuk\s+Pengolahan\s+dan\/atau\s+Pemurnian,?\s+atau\s+IUJP\s*/gi,'PH ').replace(/untuk\s+Pengolahan\s+dan\/atau\s+Pemurnian,?\s+atau\s+IUJP,?\s*/gi,'').replace(/^untuk\s+IUJP,?\s*/i,'');
+    t=t.replace(/[;,]?\s*(dan|atau)?\s*[;.]?\s*$/i,'').replace(/^\(\d+\)\s*/,'').replace(/^PH\s+/,'').replace(/^(telah|sudah)\s+/i,'').replace(/\s+([,;.])/g,'$1').replace(/\s*\bPH\b/g,' perusahaan').trim();return lc(t)};
   const T=temuan(),out=[];
+  const pick=(arrs,k,n)=>{const r=[];for(let i=0;r.length<k&&i<10;i++)arrs.forEach(a=>{if(r.length<k&&a[i]!=null)r.push(sh(a[i],n))});return r};
+  const join=a=>a.length>1?a.slice(0,-1).join(', ')+', dan '+a[a.length-1]:a[0];
   GRP.filter(x=>x[0]===e).forEach(([,pf,tema])=>{
     const pre=pf.split(','),its=MASTER.filter(i=>i.el===e&&!S.plan.na[i.id]&&pre.some(q=>q.endsWith('.')?i.id.startsWith(q):(i.id===q||i.id.startsWith(q+'.')))&&kat(i));
     if(!its.length)return;
-    const nc=its.filter(i=>kat(i)!=='POSITIF'),ok=its.length-nc.length;
-    if(!nc.length){out.push(tema+' sudah dilaksanakan sesuai ketentuan'+(its.length>1?' pada seluruh sub elemen yang diaudit':'')+'.');return}
-    const nm=nc.map(i=>lc(sh(i.name,95))),lst=nm.length>3?nm.slice(0,3).join(', ')+', dan '+(nm.length-3)+' sub elemen lainnya':nm.length>1?nm.slice(0,-1).join(', ')+' dan '+nm[nm.length-1]:nm[0];
-    const no=T.filter(t=>nc.includes(t.it)).map(t=>t.no),nos=' ('+(no.length>3?no.slice(0,3).join(', ')+' dst.':no.join(', '))+')';
-    const det=nc.length===1?sh((S.nilai[nc[0].id]||{}).masalah,170):'';
-    out.push(tema+(ok?' sudah dilaksanakan':' belum sepenuhnya sesuai ketentuan')+(ok?(its.length>1?' ('+ok+' dari '+its.length+' sub elemen sesuai)':''):'')+(ok?', namun belum sesuai pada ':', terutama pada ')+lst+(det?': '+lc(det).replace(/\.$/,''):'')+nos+'.')});
+    const dn=[],gp=[];let nd=0,ng=0;
+    its.forEach(it=>{const n=S.nilai[it.id]||{},c=n.cp||{},full=kat(it)==='POSITIF',d=[],g=[];
+      it.cp.forEach((x,k)=>{const st=(c[k]||{}).st,t=cc(x.t);if(!t)return;
+        if(st==='Sesuai'||(!st&&full)){nd++;if(VERB.test(t))d.push(t)}else if(st==='Sebagian'||st==='Tidak sesuai'){ng++;if(VERB.test(t))g.push(t)}});
+      if(d.length)dn.push(d.sort((a,b)=>a.length-b.length));if(g.length)gp.push(g.sort((a,b)=>a.length-b.length));
+      if(!full&&!g.length&&!Object.values(c).some(z=>z&&z.st==='Sebagian'||z&&z.st==='Tidak sesuai')){ng++;gp.push([null]);gp[gp.length-1]=['('+lc(it.name.length>70?it.name.slice(0,70).replace(/\s+\S*$/,'')+' …':it.name)+')']}});
+    const nc=its.filter(i=>kat(i)!=='POSITIF'),no=[...new Set(T.filter(t=>nc.includes(t.it)).map(t=>t.no))],nos=no.length?' ('+(no.length>4?no.slice(0,4).join(', ')+' dst.':no.join(', '))+')':'';
+    const D=pick(dn,3,130),G=pick(gp,3,130);let t=tema+': ';
+    if(!nc.length)t+=PHN+' sudah '+(D.length?join(D)+(nd>D.length?', serta '+(nd-D.length)+' persyaratan lainnya':''):'memenuhi seluruh persyaratan')+'.';
+    else{
+      if(D.length)t+=PHN+' sudah '+join(D)+(nd>D.length?', serta '+(nd-D.length)+' persyaratan lainnya':'')+'. ';
+      else if(!nd)t+='';
+      t+=G.length?(D.length?'Namun ':PHN+' ')+'belum '+join(G.map(g=>g.startsWith('(')?'sesuai pada '+g.slice(1,-1):g))+(ng>G.length?', serta '+(ng-G.length)+' persyaratan lainnya':'')+nos+'.':(D.length?'Namun ':PHN+' ')+'masih terdapat '+ng+' persyaratan yang belum sesuai'+nos+'.'}
+    out.push(t.replace(/\s+/g,' '))});
   return out.length?out:['(Penilaian elemen ini belum diisi.)']}
 function isiNarasi(semua){let n=0;Object.keys(ELN).forEach(e=>{if(semua||!String(S.lap.narasi[e]||'').trim()){S.lap.narasi[e]=narasiAuto(e).join('\n');n++}});save('lap');render();toast(n?'Penerapan SMKP diisi dari penilaian ('+n+' elemen). Silakan edit seperlunya.':'Semua elemen sudah terisi.')}
 function tabLap(){const L=S.lap,k=kesList(),ex=(f,l,rows)=>`<label>${l}</label><input value="${esc(L[f])}" oninput="setL('${f}',this.value)">`;
@@ -762,10 +784,10 @@ function tabLap(){const L=S.lap,k=kesList(),ex=(f,l,rows)=>`<label>${l}</label><
   <h3>Kegiatan operasional tambang</h3>${listTable('lap','operasional',[{h:'Kegiatan (dan departemen)',f:'judul'},{h:'Uraian',f:'teks'}],'Kegiatan',{judul:'',teks:''})}
   <h3>Produksi</h3>${listTable('lap','produksi',[{h:'Uraian',f:'u'},{h:'Target',f:'t'},{h:'Pencapaian',f:'p'}],'Baris',{u:'',t:'',p:''})}
   <h3>Sarana, prasarana, peralatan</h3>${listTable('lap','peralatan',[{h:'Jenis',f:'jenis'},{h:'Jumlah perusahaan',f:'pt',t:'n'},{h:'Jumlah kontraktor',f:'kontraktor',t:'n'}],'Baris',{jenis:'',pt:0,kontraktor:0})}
-  <h3>Penerapan SMKP per elemen (satu butir per baris)</h3><p class="mu" style="margin-top:0">Gambaran singkat tiap elemen dapat dibuat otomatis dari penilaian: apa yang sudah dilaksanakan dan apa yang belum sesuai, satu butir per kelompok sub elemen. Hasilnya berupa draf yang perlu Anda sempurnakan dengan fakta di lapangan. Jika dibiarkan kosong, laporan Word tetap memakai ringkasan otomatis ini.</p><div class="row"><button class="btn" onclick="isiNarasi(false)">Isi otomatis yang kosong</button><button class="btn s" onclick="if(confirm('Timpa semua isian elemen dengan hasil otomatis?'))isiNarasi(true)">Timpa semua</button></div>${Object.keys(ELN).map(e=>`<label>Elemen ${e} ${ELN[e]}</label><textarea oninput="setN('${e}',this.value)">${esc(L.narasi[e])}</textarea>`).join('')}
+  <h3>Penerapan SMKP per elemen (satu butir per baris)</h3><p class="mu" style="margin-top:0">Gambaran tiap elemen dibuat otomatis dari checkpoint penilaian: hal yang sudah dilaksanakan (checkpoint berstatus Sesuai, atau seluruh checkpoint bila nilainya penuh) dan yang belum sesuai (Sebagian/Tidak sesuai), satu butir per kelompok sub elemen. Hasilnya berupa draf yang perlu Anda sempurnakan dengan fakta di lapangan. Jika dibiarkan kosong, laporan Word tetap memakai ringkasan otomatis ini.</p><div class="row"><button class="btn" onclick="isiNarasi(false)">Isi otomatis yang kosong</button><button class="btn s" onclick="if(confirm('Timpa semua isian elemen dengan hasil otomatis?'))isiNarasi(true)">Timpa semua</button></div>${Object.keys(ELN).map(e=>`<label>Elemen ${e} ${ELN[e]}</label><textarea oninput="setN('${e}',this.value)">${esc(L.narasi[e])}</textarea>`).join('')}
   <h3>Gambar</h3><div class="row"><label style="margin:0">Struktur organisasi <input type="file" accept="image/*" onchange="addImg(this,'struktur')"></label><label style="margin:0">Dokumentasi opening/closing <input type="file" accept="image/*" onchange="addImg(this,'dok')"></label></div>
   ${L.images.map((im,i)=>`<div class="row"><img src="${im.dataUrl}" style="height:60px"><input style="flex:1" value="${esc(im.judul)}" oninput="S.lap.images[${i}].judul=this.value;save('lap')"><span class="pill">${im.grup}</span><button class="btn x" onclick="S.lap.images.splice(${i},1);save('lap');render()">×</button></div>`).join('')}
-  <h3>Respon manajemen &amp; lampiran tambahan</h3><p class="mu" style="margin-top:0">Halaman respon ditandatangani Kepala Teknik Tambang. Butir 1 (menerima hasil audit dan nilainya) dibuat otomatis. Tiga kolom di bawah bersifat opsional: bila dikosongkan, laporan memakai kalimat standar.</p><label>Komitmen manajemen (opsional, standar: berkomitmen meningkatkan penerapan SMKP sesuai Permen ESDM 26/2018)</label><textarea oninput="setL('respon1',this.value)">${esc(L.respon1)}</textarea><label>Rencana tindak lanjut manajemen (opsional, mis. perbaikan temuan mayor ditargetkan selesai tanggal sekian)</label><textarea oninput="setL('respon2',this.value)">${esc(L.respon2)}</textarea><label>Kalimat penutup (opsional, standar: mendukung penuh tindak lanjut hasil audit)</label><textarea oninput="setL('respon3',this.value)">${esc(L.respon3)}</textarea>
+  <h3>Respon manajemen &amp; lampiran tambahan</h3><p class="mu" style="margin-top:0">Halaman respon ditandatangani Kepala Teknik Tambang. Butir 1 (menerima hasil audit dan nilainya) dibuat otomatis. Tiga kolom di bawah bersifat opsional: bila dikosongkan, laporan memakai kalimat standar.</p><label>Butir komitmen (opsional, standar: berkomitmen meningkatkan penerapan SMKP sesuai Permen ESDM 26/2018, Kepmen 1827, dan Kepdirjen 185)</label><textarea oninput="setL('respon1',this.value)">${esc(L.respon1)}</textarea><label>Butir ketiga (opsional, standar: implementasi SMKP melibatkan semua karyawan dan mitra kerja yang memahami perannya)</label><textarea oninput="setL('respon2',this.value)">${esc(L.respon2)}</textarea><label>Paragraf penutup (opsional, standar: manajemen mendukung penuh tindak lanjut dan perbaikan hasil audit)</label><textarea oninput="setL('respon3',this.value)">${esc(L.respon3)}</textarea>
   ${listTable('lap','lampiranExtra',[{h:'Lampiran tambahan (mis. hasil audit kontraktor)',f:'t'}],'Lampiran',{t:''})}</div>
   <div class="card"><h2>Rekomendasi &amp; peluang perbaikan (Lampiran 4)</h2>${listTable('ofi','items',[{h:'Sub-elemen',f:'id',sel:MASTER.map(m=>m.id)},{h:'Rekomendasi / OFI',f:'ket'}],'Rekomendasi',{id:'I.1',ket:''})}</div>
   <div class="card"><h2>Keterangan kesesuaian (${k.length} sub-elemen bernilai penuh)</h2><p class="mu">Teks awal diambil dari kriteria nilai tertinggi; sesuaikan dengan bukti riil.</p>

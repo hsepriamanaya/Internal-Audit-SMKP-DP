@@ -13,7 +13,7 @@ function para(t,o){o=o||{};const lines=String(t==null?'':t).split('\n');
   return new Paragraph({alignment:o.al||AlignmentType.LEFT,spacing:{after:o.after==null?60:o.after,before:o.before||0,line:o.line||LINE},keepNext:o.keepNext,
     children:lines.flatMap((l,i)=>[run(l,{bold:o.b,italics:o.i,size:o.size}),...(i<lines.length-1?[new TextRun({break:1})]:[])])})}
 function cell(content,w,o){o=o||{};const kids=(Array.isArray(content)?content:[content]).map(c=>typeof c==='string'||typeof c==='number'?para(c,{b:o.b,al:o.al||(CSZ&&String(c).length>70?AlignmentType.BOTH:undefined),size:CSZ,line:CSZ?252:undefined,after:CSZ?20:undefined}):c);
-  return new TableCell({children:kids,width:{size:Math.round(w*WSCALE),type:WidthType.DXA},borders:o.nb?NBR:BR,columnSpan:o.span,verticalAlign:o.va||VerticalAlign.TOP,margins:CSZ?{top:70,bottom:70,left:110,right:110}:{top:50,bottom:50,left:90,right:90},
+  return new TableCell({children:kids,width:{size:Math.round(w*WSCALE),type:WidthType.DXA},borders:o.nb?NBR:BR,columnSpan:o.span,verticalAlign:o.va||VerticalAlign.TOP,margins:CSZ?{top:70,bottom:70,left:w<=800?45:110,right:w<=800?45:110}:{top:50,bottom:50,left:90,right:90},
     shading:o.fill?{type:ShadingType.CLEAR,fill:o.fill,color:'auto'}:undefined})}
 function table(rows,widths){widths=widths.map(x=>Math.round(x*WSCALE));return new Table({width:{size:widths.reduce((a,b)=>a+b,0),type:WidthType.DXA},columnWidths:widths,rows:rows.map((r,i)=>new TableRow({children:r,cantSplit:true,tableHeader:!!(CSZ&&i===0)}))})}
 function head(txt){return para(txt,{b:true,al:AlignmentType.CENTER,after:200})}
@@ -111,7 +111,7 @@ function J(t,o){return para(t,Object.assign({al:AlignmentType.BOTH,after:CSZ?140
 function bl(t){return new Paragraph({bullet:{level:0},spacing:{after:CSZ?90:50,line:LINE},alignment:AlignmentType.BOTH,children:[run(t)]})}
 function imgRun(im){try{const b64=im.dataUrl.split(',')[1],bin=typeof atob!=='undefined'?Uint8Array.from(atob(b64),c=>c.charCodeAt(0)):Buffer.from(b64,'base64');
   const type=/png/i.test(im.dataUrl.slice(0,20))?'png':'jpg';return new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:80},children:[new D.ImageRun({type,data:bin,transformation:{width:im.w||420,height:im.h||280}})]})}catch(e){return para('[gambar gagal dimuat]')}}
-function ncTable(list,startNo){const w=[500,1500,5860,1500];
+function ncTable(list,startNo){const w=[700,1750,5110,1800];
   const rows=[['No','NOMOR KETIDAKSESUAIAN','DESKRIPSI KETIDAKSESUAIAN','KATEGORI'].map((h,i)=>cell(h,w[i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat(list.map((n,i)=>[cell(startNo+i,w[0],{al:AlignmentType.CENTER}),cell(n.no,w[1]),cell(n.uraian||'',w[2],{}),cell(n.kat,w[3],{al:AlignmentType.CENTER})]));
   return table(rows,w)}
 const A4={width:11906,height:16838};
@@ -122,20 +122,20 @@ function laporanIn(d,LM){
   const AB=L.abbr||'';
   const logos=(d.logos||[]).filter(x=>x&&x.dataUrl);
   const logoRow=logos.length?[new Table({width:{size:Math.round(9360*WSCALE),type:WidthType.DXA},columnWidths:logos.map(()=>Math.round(9360*WSCALE/logos.length)),alignment:AlignmentType.CENTER,rows:[new TableRow({children:logos.map(g=>new TableCell({borders:NBR,verticalAlign:VerticalAlign.CENTER,width:{size:Math.round(9360*WSCALE/logos.length),type:WidthType.DXA},children:[imgRun(Object.assign({},g,{w:g.w,h:g.h}))]}))})]})]:[];
-  const RULE=(sz,bef,aft)=>new Paragraph({spacing:{before:bef,after:aft},border:{bottom:{style:BorderStyle.SINGLE,size:sz,color:'000000',space:1}},children:[]});
-  const half=Math.round(9360*WSCALE/2),addr=(t,v)=>new TableCell({borders:NBR,width:{size:half,type:WidthType.DXA},margins:{top:60,bottom:60,left:120,right:120},children:[para(t,{b:true,al:AlignmentType.CENTER,after:60,line:260}),para(v||'-',{al:AlignmentType.CENTER,after:0,line:276})]});
-  const cov=[para('',{after:300,line:240}),
-    para('LAPORAN INTERNAL AUDIT',{b:true,al:AlignmentType.CENTER,size:36,after:120,line:276}),
-    para('PENERAPAN SISTEM MANAJEMEN KESELAMATAN PERTAMBANGAN MINERAL DAN BATUBARA',{b:true,al:AlignmentType.CENTER,size:26,after:0,line:300}),
-    RULE(18,160,300),
-    ...logoRow,para('',{after:logos.length?300:700,line:240}),
-    para(String(d.company||'').toUpperCase(),{b:true,al:AlignmentType.CENTER,size:34,after:0,line:300}),
-    RULE(18,160,0),
-    para('',{after:logos.length?1500:2400,line:240}),
-    para('ALAMAT KANTOR',{b:true,al:AlignmentType.CENTER,after:100,line:276}),
-    new Table({width:{size:half*2,type:WidthType.DXA},columnWidths:[half,half],alignment:AlignmentType.CENTER,rows:[new TableRow({children:[addr('HEAD OFFICE',L.kantorPusat),addr('SITE OFFICE',L.alamat)]})]}),
-    RULE(6,300,240),
-    para('Jadwal Pelaksanaan Audit',{b:true,al:AlignmentType.CENTER,after:40,line:276}),para(d.tglAudit||'',{al:AlignmentType.CENTER,after:0,line:276})];
+  const CP=(t,o)=>para(t,Object.assign({b:true,al:AlignmentType.CENTER,after:0,line:300},o||{}));
+  const nl=Math.min(logos.length,3),LB=nl===1?[400,170]:nl===2?[250,120]:[170,90];
+  const logoCover=logos.slice(0,3).map(g=>{const k=Math.min(LB[0]/g.w,LB[1]/g.h);return Object.assign({},g,{w:Math.round(g.w*k),h:Math.round(g.h*k)})});
+  const logoP=nl?(nl===1?[imgRun(logoCover[0])]:[new Table({width:{size:Math.round(9360*WSCALE),type:WidthType.DXA},columnWidths:logoCover.map(()=>Math.round(9360*WSCALE/nl)),alignment:AlignmentType.CENTER,rows:[new TableRow({children:logoCover.map(g=>new TableCell({borders:NBR,width:{size:Math.round(9360*WSCALE/nl),type:WidthType.DXA},verticalAlign:D.VerticalAlign.CENTER,children:[imgRun(g)]}))})]})]):[CP(String(d.company||'').toUpperCase(),{size:34,before:600})];
+  const lw=1900,cw=300,aw=Math.round(9360*WSCALE)-lw-cw,NB={top:{style:BorderStyle.NONE,size:0,color:'FFFFFF'},bottom:{style:BorderStyle.NONE,size:0,color:'FFFFFF'},left:{style:BorderStyle.NONE,size:0,color:'FFFFFF'},right:{style:BorderStyle.NONE,size:0,color:'FFFFFF'}};
+  const ar=(lab,v)=>new TableRow({children:[[lab,lw,AlignmentType.LEFT,true],[':',cw,AlignmentType.CENTER,true],[String(v||'-').toUpperCase(),aw,AlignmentType.BOTH,false]].map(([t,w,al,b])=>new TableCell({borders:NB,width:{size:w,type:WidthType.DXA},margins:{top:0,bottom:0,left:0,right:0},children:[para(t,{b:al!==AlignmentType.BOTH,al,after:0,line:340})]}))});
+  const cov=[para('',{after:200,line:240}),
+    new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:360,line:300},children:[run('LAPORAN ',{bold:true}),run('INTERNAL AUDIT',{bold:true,italics:true})]}),
+    CP('PENERAPAN SISTEM MANAJEMEN'),CP('KESELAMATAN PERTAMBANGAN (SMKP)'),
+    para('',{after:nl?2000:1800,line:240}),...logoP,para('',{after:nl?2200:2000,line:240}),
+    CP('ALAMAT KANTOR',{after:360}),
+    new Table({width:{size:lw+cw+aw,type:WidthType.DXA},columnWidths:[lw,cw,aw],alignment:AlignmentType.CENTER,rows:[ar('HEAD OFFICE',L.kantorPusat)]}),para('',{after:240,line:240}),
+    new Table({width:{size:lw+cw+aw,type:WidthType.DXA},columnWidths:[lw,cw,aw],alignment:AlignmentType.CENTER,rows:[ar('SITE OFFICE',L.alamat)]}),
+    para('',{after:1500,line:240}),CP('TANGGAL PELAKSANAAN AUDIT: '+(d.tglAudit||''),{line:320})];
   kids.push(para('DAFTAR ISI',{b:true,al:AlignmentType.CENTER,after:160}),new D.TableOfContents('Daftar Isi',{hyperlink:true,headingStyleRange:'1-2'}),new Paragraph({children:[new PageBreak()]}));
   // 1
   kids.push(H1('1. LATAR BELAKANG'),J(L.latar1||'Audit SMKP Minerba ini merupakan bagian dari penerapan Elemen SMKP Minerba sesuai dengan ketentuan dalam Peraturan Menteri Energi dan Sumber Daya Mineral Nomor 26 Tahun 2018, Keputusan Menteri Energi dan Sumber Daya Mineral Nomor 1827.K/30/MEM/2018 Lampiran IV, serta Keputusan Direktur Jenderal Mineral dan Batubara Nomor 185.K/37.04/DJB/2019 tentang Petunjuk Teknis Pelaksanaan Keselamatan Pertambangan dan Pelaksanaan, Penilaian, dan Pelaporan Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara.'),
@@ -149,7 +149,8 @@ function laporanIn(d,LM){
   (L.operasional||[]).forEach(o=>{kids.push(para(o.judul,{b:true,before:60,keepNext:true}),J(o.teks||''))});
   if((L.produksi||[]).length){kids.push(para('Tabel 1 Target dan pencapaian produksi '+d.company,{b:true,before:80,keepNext:true}),table([['No','Target Produksi','Pencapaian'].map((h,i)=>cell(h,[600,4380,4380][i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat(L.produksi.map((r,i)=>[cell(i+1,600),cell(r.u+' : '+r.t,4380),cell(r.p,4380)])),[600,4380,4380]))}
   if((L.peralatan||[]).length){kids.push(para('Tabel '+((L.produksi||[]).length?2:1)+' Daftar sarana, prasarana, instalasi, dan peralatan '+d.company,{b:true,before:100,keepNext:true}),table([['No','Jenis','Informasi / PT','Kontraktor','Jumlah'].map((h,i)=>cell(h,[600,3600,1900,1900,1360][i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat(L.peralatan.map((r,i)=>[cell(i+1,600),cell(r.jenis,3600),cell(r.pt,1900),cell(r.kontraktor,1900),cell((Number(r.pt)||0)+(Number(r.kontraktor)||0),1360)])),[600,3600,1900,1900,1360]))}
-  kids.push(H2('2.3 Struktur Organisasi '+d.company));(d.images||[]).filter(i=>i.grup==='struktur').forEach(i=>kids.push(imgRun(i),para('Gambar 1 Struktur Organisasi '+d.company,{al:AlignmentType.CENTER,i:true,after:120})));
+  const struct=(d.images||[]).filter(i=>i.grup==='struktur');let secA=null,ls=null;
+  if(struct.length){secA=kids.splice(0);ls=[H2('2.3 Struktur Organisasi '+d.company)];struct.forEach(i=>{const k=Math.min(930/i.w,500/i.h);ls.push(imgRun(Object.assign({},i,{w:Math.round(i.w*k),h:Math.round(i.h*k)})))});kids.push(para('',{after:0}))}else kids.push(H2('2.3 Struktur Organisasi '+d.company));
   kids.push(H2('2.4 Penerapan SMKP Minerba'));
   kids.push(J(d.company+' telah menerapkan SMKP Minerba (Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara) berdasarkan Keputusan Menteri ESDM Nomor 1827 K/30/MEM/2018 tentang Pedoman Pelaksanaan Kaidah Teknik Pertambangan yang Baik, khususnya Lampiran IV tentang Pedoman Penerapan SMKP Minerba, yang dirinci dalam Keputusan Direktur Jenderal Mineral dan Batubara Nomor 185.K/37.04/DJB/2019 tentang Petunjuk Teknis Pelaksanaan Keselamatan Pertambangan dan Pelaksanaan, Penilaian, dan Pelaporan SMKP Minerba.'),J('Penerapan SMKP Minerba di '+(AB||d.company)+' meliputi 7 (tujuh) elemen sesuai peraturan perundang-undangan, dengan gambaran penerapan sebagai berikut:'));
   const EL=d.elNames;Object.keys(EL).forEach(e=>{kids.push(para('Elemen '+e+' '+EL[e],{b:true,before:60,keepNext:true}));(L.narasi&&L.narasi[e]?String(L.narasi[e]).split('\n').filter(Boolean):['(belum diisi)']).forEach(t=>kids.push(bl(t)))});
@@ -177,20 +178,22 @@ function laporanIn(d,LM){
   // 6
   kids.push(H1('6. LAMPIRAN-LAMPIRAN'));(d.lampiran||[]).forEach((x,i)=>kids.push(new Paragraph({spacing:{after:70,line:LINE},indent:{left:454,hanging:454},alignment:AlignmentType.BOTH,children:[run((i+1)+'.\t'+x)],tabStops:[{type:'left',position:454}]})));
   // 7
-  kids.push(H1('7. HALAMAN PENUTUP',true),para((L.kota||'')+', '+fmtTgl(L.tglLaporan),{before:100,after:80}),para('Dibuat oleh,',{after:20}),para('TIM AUDITOR INTERNAL '+String(d.company||'').toUpperCase()+':',{b:true,after:100}));
-  {const wp=[600,2100,3260,3400];kids.push(table([['No','Jabatan','Nama (No. Registrasi)','Tanda Tangan'].map((h,i)=>cell(h,wp[i],{b:true,al:AlignmentType.CENTER,fill:'D9D9D9'}))].concat((d.tim||[]).map((t,i)=>[cell(i+1,wp[0],{al:AlignmentType.CENTER}),cell(t.jabatan||'Auditor',wp[1]),cell(t.nama+(t.reg?' (No. Reg : '+t.reg+')':''),wp[2]),cell([para('',{after:500})],wp[3])])),wp))}
-  kids.push(para('Diketahui oleh,',{before:200,after:0}),para('',{after:600}),para(L.ktt||'',{b:true,after:0}),para('Kepala Teknik Tambang'));
+  kids.push(H1('7. HALAMAN PENUTUP'),para((L.kota||'')+',  '+fmtTgl(L.tglLaporan),{before:60,after:120,keepNext:true}),para('Dibuat oleh:',{after:120,keepNext:true}));
+  (d.tim||[]).forEach((t,i)=>{kids.push(new Paragraph({keepNext:true,spacing:{after:0,line:LINE},tabStops:[{type:'left',position:454},{type:'left',position:2000}],indent:{left:2000,hanging:2000},children:[run((i+1)+'.\t'+(t.jabatan||'Auditor')+'\t: '+(t.nama||'')+(t.reg?' (No. Reg : '+t.reg+')':''))]}),para('',{after:640,keepNext:true}),new Paragraph({keepNext:true,spacing:{after:160},indent:{left:454},children:[run('-------------------------------')]}))});
+  kids.push(para('Diketahui oleh,',{before:80,after:0,keepNext:true}),para('',{after:900,keepNext:true}),new Paragraph({keepNext:true,spacing:{after:0},children:[run(L.ktt||'',{bold:true,underline:{type:D.UnderlineType.SINGLE}})]}),para('Kepala Teknik Tambang',{b:true}));
   const dok=(d.images||[]).filter(i=>i.grup==='dok');if(dok.length){kids.push(new Paragraph({children:[new PageBreak()]}));dok.forEach(i=>{kids.push(para(i.judul||'',{b:true,al:AlignmentType.CENTER}),imgRun(i))})}
-  kids.push(new Paragraph({children:[new PageBreak()]}),para('RESPON MANAJEMEN TERHADAP PELAKSANAAN AUDIT',{b:true,al:AlignmentType.CENTER,after:160}),
-    J('Sehubungan dengan selesainya kegiatan audit internal Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara yang dilaksanakan terhadap '+d.company+' pada tanggal '+(d.tglAudit||'')+':'),
-    bl('Kami menerima hasil audit internal Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara di '+d.company+' dengan nilai '+d.total.toFixed(2)+'%.'),
-    bl(L.respon1||('Kami berkomitmen meningkatkan penerapan SMKP Minerba sesuai ketentuan Peraturan Menteri ESDM Nomor 26 Tahun 2018.')),
-    ...(L.respon2?[bl(L.respon2)]:[]),J(L.respon3||'Kami akan mendukung sepenuhnya proses tindak lanjut dan perbaikan berdasarkan hasil audit internal SMKP ini.',{before:80}),
-    para((L.kota||'')+', '+fmtTgl(L.tglRespon||L.tglLaporan),{before:160}),para('',{after:600}),para(L.ktt||'',{b:true,after:0}),para('Kepala Teknik Tambang'));
+  {const nm=d.company,ab=AB||d.company;
+  kids.push(new Paragraph({children:[new PageBreak()]}),para('RESPON MANAJEMEN TERHADAP PELAKSANAAN AUDIT',{b:true,al:AlignmentType.CENTER,after:240,keepNext:true}),
+    new Paragraph({alignment:AlignmentType.BOTH,spacing:{after:160,line:LINE},children:[run('Sehubungan dengan selesainya kegiatan audit internal Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara yang dilaksanakan terhadap '),run(nm,{bold:true}),run(' pada tanggal '+(d.tglAudit||'')+' dengan ini kami menanggapi beberapa hal sebagai berikut:')]}),
+    new Paragraph({bullet:{level:0},alignment:AlignmentType.LEFT,spacing:{after:100,line:LINE},children:[run('Kami menerima hasil audit internal Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara di '+nm+' dengan nilai'),new TextRun({break:1,text:'',font:FONT,size:SZ}),run(d.total.toFixed(2)+'%',{bold:true})]}),
+    new Paragraph({bullet:{level:0},alignment:AlignmentType.BOTH,spacing:{after:100,line:LINE},children:[run(L.respon1||(nm+' berkomitmen meningkatkan penerapan Sistem Manajemen Keselamatan Pertambangan Mineral dan Batubara sesuai ketentuan Peraturan Menteri ESDM Nomor 26 Tahun 2018, Keputusan Menteri ESDM Nomor 1827 K/30/MEM/2018, dan Keputusan Direktur Jenderal Mineral dan Batubara Nomor 185.K/37.04/DJB/2019.'))]}),
+    new Paragraph({bullet:{level:0},alignment:AlignmentType.BOTH,spacing:{after:160,line:LINE},children:[run(L.respon2||('Implementasi SMKP ini harus melibatkan semua karyawan, baik '+ab+' maupun mitra kerja, dan semua karyawan harus memahami perannya dalam implementasi SMKP.'))]}),
+    J(L.respon3||('Saya selaku manajemen di '+nm+' akan mendukung sepenuhnya proses tindak lanjut dan perbaikan berdasarkan hasil audit internal SMKP ini, sebagai bentuk komitmen '+nm+' terhadap peraturan perundang-undangan di bidang Keselamatan Pertambangan.'),{before:60}),
+    para((L.kota||'')+', '+fmtTgl(L.tglRespon||L.tglLaporan),{before:200,keepNext:true}),para('',{after:900,keepNext:true}),new Paragraph({keepNext:true,spacing:{after:0},children:[run(L.ktt||'',{bold:true,underline:{type:D.UnderlineType.SINGLE}})]}),para('Kepala Teknik Tambang',{b:true}))}
   const heads={heading1:{run:{font:FONT,size:SZ,bold:true,color:'000000'}},heading2:{run:{font:FONT,size:SZ,bold:true,color:'000000'}}};
   const ft=new D.Footer({children:[new Paragraph({alignment:AlignmentType.RIGHT,border:{top:{style:BorderStyle.SINGLE,size:6,color:'000000',space:4}},children:[run('Halaman ',{size:20}),new TextRun({children:[D.PageNumber.CURRENT],font:FONT,size:20}),run(' | ',{size:20}),new TextRun({children:[D.PageNumber.TOTAL_PAGES],font:FONT,size:20})]})]});
   const pg={size:A4,margin:LM,};
-  return new Document({features:{updateFields:true},styles:{default:{document:{run:{font:FONT,size:SZ}},heading1:heads.heading1,heading2:heads.heading2}},sections:[{properties:{page:pg},children:cov},{properties:{page:pg},footers:{default:ft},children:kids}]})}
+  return new Document({features:{updateFields:true},styles:{default:{document:{run:{font:FONT,size:SZ}},heading1:heads.heading1,heading2:heads.heading2}},sections:[{properties:{page:pg},children:cov}].concat(secA?[{properties:{page:pg},footers:{default:ft},children:secA},{properties:{page:{size:{width:A4.width,height:A4.height,orientation:D.PageOrientation.LANDSCAPE},margin:{top:1134,bottom:1134,left:1134,right:1134}}},footers:{default:ft},children:ls}]:[]).concat([{properties:{page:pg},footers:{default:ft},children:kids}])})}
 
 async function toBlob(doc){return Packer.toBlob(doc)}
 async function toBuffer(doc){return Packer.toBuffer(doc)}
