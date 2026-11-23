@@ -144,13 +144,22 @@ const Store={
   role:'admin',cur(){try{return localStorage.getItem('smkp_cur')||'a1'}catch(e){return'a1'}},
   url(){try{return localStorage.getItem('smkp_url')||window.SMKP_DEFAULT_URL||''}catch(e){return window.SMKP_DEFAULT_URL||''}},
   key(){try{return sessionStorage.getItem('smkp_key')||''}catch(e){return''}},
-  async get(k){
+  // nilai JSON besar dipecah ke beberapa sel (batas 45k karakter per sel)
+  async get(k){const v=await this.get0(k);return v&&v.__ch?this.join(k,v):v},
+  async mget(keys){const o=await this.mget0(keys),big=keys.filter(k=>o[k]&&o[k].__ch);
+    if(big.length){const ps=[];big.forEach(k=>{for(let j=0;j<o[k].__ch;j++)ps.push(k+'~p'+j)});const m=await this.mget0(ps);
+      big.forEach(k=>{let t='';for(let j=0;j<o[k].__ch;j++)t+=m[k+'~p'+j]||'';try{o[k]=JSON.parse(t)}catch(e){o[k]=null}})}return o},
+  async join(k,v){let t='';for(let j=0;j<v.__ch;j++)t+=(await this.get0(k+'~p'+j))||'';try{return JSON.parse(t)}catch(e){return null}},
+  async set(k,v){const t=JSON.stringify(v);
+    if(t.length<=30000){await this.set0(k,v);return}
+    const n=Math.ceil(t.length/30000);for(let j=0;j<n;j++)await this.set0(k+'~p'+j,t.slice(j*30000,(j+1)*30000));await this.set0(k,{__ch:n})},
+  async get0(k){
     if(this.url()){const r=await this.call({a:'get',key:k});return r.value?JSON.parse(r.value):null}
     try{const v=localStorage.getItem('smkp:'+k);return v?JSON.parse(v):null}catch(e){return null}},
-  async mget(keys){
+  async mget0(keys){
     if(this.url()){const r=await this.call({a:'mget',keys});const o={};keys.forEach(k=>{o[k]=r.values&&r.values[k]?JSON.parse(r.values[k]):null});return o}
-    const o={};for(const k of keys)o[k]=await this.get(k);return o},
-  async set(k,v){
+    const o={};for(const k of keys)o[k]=await this.get0(k);return o},
+  async set0(k,v){
     if(this.url()){await this.call({a:'set',key:k,value:v});return}
     try{localStorage.setItem('smkp:'+k,JSON.stringify(v))}catch(e){}},
   async call(b,n){n=n||0;b.k=this.key();
