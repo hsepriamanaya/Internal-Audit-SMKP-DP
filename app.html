@@ -764,7 +764,7 @@ function narasiAuto(e){
         if(st==='Sesuai'||(!st&&full)){nd++;if(VERB.test(t))d.push(t)}else if(st==='Sebagian'||st==='Tidak sesuai'){ng++;if(VERB.test(t))g.push(t)}});
       if(d.length)dn.push(d.sort((a,b)=>a.length-b.length));if(g.length)gp.push(g.sort((a,b)=>a.length-b.length));
       if(!full&&!g.length&&!Object.values(c).some(z=>z&&z.st==='Sebagian'||z&&z.st==='Tidak sesuai')){ng++;gp.push([null]);gp[gp.length-1]=['('+lc(it.name.length>70?it.name.slice(0,70).replace(/\s+\S*$/,'')+' …':it.name)+')']}});
-    const nc=its.filter(i=>kat(i)!=='POSITIF'),no=[...new Set(T.filter(t=>nc.includes(t.it)).map(t=>t.no))],nos=no.length?' ('+(no.length>4?no.slice(0,4).join(', ')+' dst.':no.join(', '))+')':'';
+    const nc=its.filter(i=>kat(i)!=='POSITIF'),no=[...new Set(T.filter(t=>nc.includes(t.it)).map(t=>t.no))],nos='';
     const D=pick(dn,3,130),G=pick(gp,3,130);let t=tema+': ';
     if(!nc.length)t+=PHN+' sudah '+(D.length?join(D)+(nd>D.length?', serta '+(nd-D.length)+' persyaratan lainnya':''):'memenuhi seluruh persyaratan')+'.';
     else{
