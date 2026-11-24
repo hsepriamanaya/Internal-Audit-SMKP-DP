@@ -609,6 +609,11 @@ function locHTML(it,n){if(!it.cp.some((c,i)=>c.m.includes('OBS')&&mActive(it,i,c
   return `<details style="margin:6px 0" ${chk?'open':''}><summary class="mu">Lokasi observasi: ${chk} dari ${ar.length} area sampel diperiksa${n.locNC!==''&&n.locNC!=null&&n.locTot?' · temuan di '+n.locNC+' lokasi ('+Math.round(Number(n.locNC)/Number(n.locTot)*100)+'%)':''}</summary>
    <div style="font-size:13px;margin-top:4px">${list.map(a=>{const ai=sm.allAreas.findIndex(x=>x.nama===a.nama),v=la[a.nama]||'';return `<div class="row" style="margin:2px 0;gap:8px"><span style="min-width:200px;flex:1">${esc(a.nama)}${a.pelaksana&&a.pelaksana!=='IUP'?' <span class="mu">['+esc(a.pelaksana)+']</span>':''}</span><select style="width:170px" onchange="locSet('${it.id}',${ai},this.value)"><option value="" ${v===''?'selected':''}>Belum diperiksa</option><option value="1" ${v===1?'selected':''}>Diperiksa, sesuai</option><option value="2" ${v===2?'selected':''}>Diperiksa, ada temuan</option></select></div>`}).join('')}</div>
    <p class="mu" style="margin:4px 0">Jumlah lokasi diperiksa dan lokasi bertemuan terhitung otomatis. Bila lokasi bertemuan lebih dari 30%, kategori naik menjadi Mayor.</p></details>`}
+const SUBN={'II.2':'Manajemen Risiko','III.2':'Penunjukan KTT, Kepala Tambang Bawah Tanah, dan/atau Kepala Kapal Keruk untuk Perusahaan Pertambangan','III.10':'Pendidikan dan Pelatihan serta Kompetensi Kerja','III.12':'Pengelolaan Administrasi Keselamatan Pertambangan','IV.1':'Pelaksanaan Pengelolaan Operasional','IV.2':'Pelaksanaan Pengelolaan Lingkungan Kerja','IV.3':'Pelaksanaan Pengelolaan Kesehatan Kerja','IV.4':'Pelaksanaan Pengelolaan KO Pertambangan','IV.5':'Pelaksanaan Pengelolaan Bahan Peledak dan Peledakan','IV.6':'Penetapan Sistem Perancangan dan Rekayasa','IV.8':'Pemantauan dan Pengelolaan Perusahaan Jasa Pertambangan','V.1':'Pemantauan dan Pengukuran Kinerja','V.5':'Evaluasi Pengelolaan Administrasi Keselamatan Pertambangan'};
+const parOf=id=>{const p=id.split('.').slice(0,2).join('.');return id.split('.').length>2&&SUBN[p]?p:''};
+function subHead(code,it){const all=MASTER.filter(i=>parOf(i.id)===code&&!S.plan.na[i.id]),sc=all.filter(i=>{const n=S.nilai[i.id];return n&&n.v!==''&&n.v!=null}),v=sc.reduce((a,i)=>a+Number(S.nilai[i.id].v),0),m=sc.reduce((a,i)=>a+Number(i.max),0);
+  return `<div class="subhd" style="margin:16px 0 6px;padding:8px 12px;background:var(--sel,#eef4f1);border-left:4px solid var(--accent,#2f5d50);border-radius:4px"><b>${code}</b> ${esc(SUBN[code])} <span class="mu">· ${all.length} sub-sub elemen${m?' · nilai gabungan '+v+'/'+m+' ('+Math.round(v/m*100)+'%)'+(v/m<0.5?' <span class="warn">di bawah 50% → Mayor</span>':''):''}</span></div>`}
+function itemsHTML(list,fn){let last='';return list.map(i=>{const c=parOf(i.id);let h='';if(c!==last){if(c)h=subHead(c,i);last=c}return h+(fn?fn(i):itemHTML(i))}).join('')}
 let nFilter='all',nQuery='',nMet='',nAuto=true,nMetX=null;
 const curMet=()=>nMetX||(nMet?[nMet]:[]);
 const hasMetA=(i,ms)=>!ms.length||ms.some(m=>hasMet(i,m));
@@ -658,7 +663,7 @@ function tabNilaiJadwal(){
     if(!its.length)return '';
     const shown=its.filter(i=>hasMetA(i,metOf(i.id))).filter(i=>{const k=kat(i),n=S.nilai[i.id],has=n&&n.v!==''&&n.v!=null;
       if(nFilter==='todo'&&(has||S.plan.na[i.id]))return false;if(nFilter==='nc'&&!(k&&k!=='POSITIF'))return false;if(nFilter==='pos'&&k!=='POSITIF')return false;return !q||(i.id+' '+i.name).toLowerCase().includes(q)});
-    const html=shown.map(i=>{nMetX=metOf(i.id);if(!nMetX.length)nMetX=null;const h=itemHTML(i);nMetX=null;return h}).join('');
+    const html=itemsHTML(shown,i=>{nMetX=metOf(i.id);if(!nMetX.length)nMetX=null;const h=itemHTML(i);nMetX=null;return h});
     return `<h3 style="margin:14px 0 6px">${esc(sg.m||'Kegiatan')} <span class="mu">– elemen ${nActEl}: ${its.filter(i=>filled(i.id)).length} dari ${its.length} sub elemen terisi</span></h3>${shown.length?html:'<div class="empty">Tidak ada sub-elemen yang cocok dengan filter ini.</div>'}`}).join('');
   return modeBar()+`<div class="row" style="align-items:flex-end"><div style="flex:1;min-width:260px"><label>Kegiatan menurut jadwal (${J.length} kegiatan)</label><select onchange="nAct=Number(this.value);render()">${J.map((x,i)=>`<option value="${i}" ${i===nAct?'selected':''}>${esc(title(x))} — ${prog(x)} terisi</option>`).join('')}</select></div>
    <button class="btn s" onclick="nAct=Math.max(0,nAct-1);render()" ${nAct?'':'disabled'}>← Sebelumnya</button><button class="btn s" onclick="nAct=Math.min(${J.length-1},nAct+1);render()" ${nAct<J.length-1?'':'disabled'}>Berikutnya →</button></div>
@@ -683,7 +688,7 @@ function tabNilai(){
    <div class="seg" style="display:flex;gap:4px">${[['all','Semua'],['todo','Belum diisi'],['nc','Ketidaksesuaian'],['pos','Sesuai']].map(([v,l])=>`<button class="chipb ${nFilter===v?'on':''}" onclick="nFilter='${v}';render()">${l}</button>`).join('')}</div>
    <input type="search" style="width:220px" placeholder="Cari sub-elemen" value="${esc(nQuery)}" oninput="nQuery=this.value;clearTimeout(window.__nq);window.__nq=setTimeout(render,250)" aria-label="Cari sub-elemen"></div>
   ${metBar(poolEl)}
-  ${items.length?items.map(itemHTML).join(''):'<div class="empty">Tidak ada sub-elemen yang cocok dengan filter ini.</div>'}`}
+  ${items.length?itemsHTML(items):'<div class="empty">Tidak ada sub-elemen yang cocok dengan filter ini.</div>'}`}
 
 // ---------- Temuan ----------
 function temuan(){
@@ -693,10 +698,14 @@ function temuan(){
   const myNo={};L.forEach(x=>{const sub=x.it.id.split('.').slice(0,2).join('.');
     if(x.k==='MAYOR'){if(!(sub in myNo))myNo[sub]=cnt.MAYOR_N=(cnt.MAYOR_N||0)+1;x.cnt=myNo[sub]}else{cnt[x.k]=(cnt[x.k]||0)+1;x.cnt=cnt[x.k]}
     x.no=pre[x.k]+'-'+String(x.cnt).padStart(2,'0');x.txt=uraian(x)});return L}
+function refEl(x){const it=x.it,c=parOf(it.id);if(!c)return 'Sub Elemen '+it.id+' ('+it.name+')';
+  return 'Sub-sub Elemen '+it.id+' ('+it.name+') pada Sub Elemen '+c+' ('+SUBN[c]+')'}
+function mayorNote(x){const c=parOf(x.it.id);if(!c||x.k!=='MAYOR')return '';const g=subAgg(x.it);
+  return g<50?' Nilai gabungan seluruh sub-sub elemen pada Sub Elemen '+c+' sebesar '+Math.round(g)+'% (di bawah 50%), sehingga ketidaksesuaian ini dikategorikan Mayor pada tingkat Sub Elemen '+c+'.':''}
 function uraian(x){const n=x.n,it=x.it;
   const ev=it.cp.map((c,i)=>{const r=(n.cp||{})[i];return r&&r.bukti?r.bukti:null}).filter(Boolean);
   const nc=it.cp.map((c,i)=>(n.cp||{})[i]&&['Tidak sesuai','Sebagian'].includes(n.cp[i].st)?c.t:null).filter(Boolean);
-  return `Ditemukan bukti ${n.masalah||(nc.length?nc.join('; '):'[uraikan masalah]')}${n.lokasi?' di '+n.lokasi:(Object.keys(n.locAr||{}).some(a=>n.locAr[a]===2)?' di '+Object.keys(n.locAr).filter(a=>n.locAr[a]===2).join(', '):'')} berdasarkan ${ev.length?ev.join('; '):'[metode dan sampel bukti]'}.${loc30(n)?' Ketidaksesuaian ditemukan pada '+n.locNC+' dari '+n.locTot+' lokasi yang diperiksa ('+Math.round(Number(n.locNC)/Number(n.locTot)*100)+'%), melebihi 30%.':''} Hal ini tidak sesuai dengan penerapan SMKP Sub Elemen ${it.id}.`}
+  return `Ditemukan bukti ${n.masalah||(nc.length?nc.join('; '):'[uraikan masalah]')}${n.lokasi?' di '+n.lokasi:(Object.keys(n.locAr||{}).some(a=>n.locAr[a]===2)?' di '+Object.keys(n.locAr).filter(a=>n.locAr[a]===2).join(', '):'')} berdasarkan ${ev.length?ev.join('; '):'[metode dan sampel bukti]'}.${loc30(n)?' Ketidaksesuaian ditemukan pada '+n.locNC+' dari '+n.locTot+' lokasi yang diperiksa ('+Math.round(Number(n.locNC)/Number(n.locTot)*100)+'%), melebihi 30%.':''} Hal ini tidak sesuai dengan penerapan SMKP ${refEl(x)}.${mayorNote(x)}`}
 function docData(){const L=temuan(),b=S.ba;
   const ketua=(b.tim2.find(x=>/Ketua/.test(x.jabatan))||b.tim2[0]||{}).nama||'',aud=(b.tim2.find(x=>!/Ketua/.test(x.jabatan))||{}).nama||ketua;
   return {company:b.auditi,tglAudit:b.periode,ncs:L.map(x=>{const t=S.tindaklanjut[x.it.id]||{},n=x.n;
