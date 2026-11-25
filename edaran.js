@@ -350,7 +350,7 @@ window.EDARAN={terbaru:'2026',versi:{
    "Terdapat kekeliruan dalam pemberian nilai audit internal SMKP yang dikarenakan ketidaktelitian dalam memperhatikan interaksi dan keterkaitan antar sub elemen dan/atau sub sub elemen SMKP;",
    "Terdapat kekeliruan dan/atau ketidakakuratan dalam penulisan temuan ketidaksesuaian dengan kerangka Problem – Location – Objective Evidence – Reference, sehingga membuat perencanaan terhadap tindak lanjut perbaikan dan pencegahannya menjadi tidak optimal",
    "Terdapat kekeliruan dalam pemberian nilai sesuai Kriteria Audit Internal SMKP;",
-   "Terdapat kekeliruan dalam dalam penetapan temuan kategori kritikal, mayor, dan minor;",
+   "Terdapat kekeliruan dalam penetapan temuan kategori kritikal, mayor, dan minor;",
    "Minimnya ulasan terhadap keseluruhan sampel Audit Internal SMKP yang ditetapkan pada Rencana Audit, sehingga terdapat kecenderungan fokus kepada pemenuhan aspek administrasi;",
    "Penyusunan Rencana Tindak Lanjut Audit belum memuat tindakan perbaikan, pencegahan, dan peningkatan yang tepat;",
    "Penetapan batas waktu pelaksanaan tindakan perbaikan dan pencegahan belum mempertimbangkan urgensi terkait pencegahan kecelakaan, kejadian berbahaya, Kejadian Akibat Penyakit Tenaga Kerja, dan Penyakit Akibat Kerja;",
